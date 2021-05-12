@@ -1,0 +1,12 @@
+# Istio Training Materials
+
+Labs:
+
+1. [Installing Istio](./labs/1-installing-istio.md)
+1. [Observability](./labs/2-observability.md)
+1. [Gateways](./labs/3-gateways.md)
+1. [Observing failure injection](./labs/4-observing-failure-injection.md)
+1. [Simple traffic routing](./labs/5-simple-traffic-routing.md)
+1. [Advanced traffic routing](./labs/6-advanced-traffic-routing.md)
+1. [Mutual TLS](./labs/7-mutual-tls.md)
+1. [Access control](./labs/8-access-control.md)
