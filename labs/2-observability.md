@@ -2,10 +2,11 @@
 
 In this module, we will learn about a couple of monitoring (Prometheus), tracing (Zipkin), and data visualization tools (Grafana).
 
-For Grafana and Kiali to work, we will first have to install the Prometheus addon.
+For Grafana and Kiali to work, we will first have to install the Prometheus addon. Make sure you have Istio installed on your cluster. You can follow the [instructions here](./1-installing-istio.md).
 
 ## Deploying a sample app
-To see some requests and traffic we will deploy an Nginx instance first. 
+
+To see some requests and traffic we will deploy an Nginx instance first.
 
 ```yaml
 apiVersion: v1
