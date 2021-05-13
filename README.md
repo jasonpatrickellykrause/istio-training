@@ -10,3 +10,6 @@ Labs:
 1. [Advanced traffic routing](./labs/6-advanced-traffic-routing.md)
 1. [Mutual TLS](./labs/7-mutual-tls.md)
 1. [Access control](./labs/8-access-control.md)
+1. [VM workloads](./labs/9-vm-workloads.md)
+1. [Envoy Demo](./labs/10-envoy-demo.md)
+1. [Envoy Filters](./labs/11-envoy-filter.md)
