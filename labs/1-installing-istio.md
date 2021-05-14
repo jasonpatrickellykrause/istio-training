@@ -27,14 +27,11 @@ From the organization/project window select the organization (there should be on
 
 ![Select org and project](./img/1-project-org-select.png)
 
-
 Once you've selected the project and logged in, click the **Activate Cloud Shell** button on the top-right of the screen as shown in the figure below:
 
 ![Activate Cloud Shell](./img/1-activate-cloudshell.png)
 
-This is the terminal you will use to go through the labs. You will also be prompted to authorize cloud shell - you can safely click the Authorize button.
-
-![Authorize cloud Shell](./img/1-authorize-cloud-shell.png)
+This is the terminal you will use to go through the labs.
 
 ### Connecting to the Kubernetes cluster
 
@@ -51,6 +48,10 @@ A Kubernetes cluster was provisioned for you. In order to connect to it from the
   ![Command access](./img/1-cmd-access.png)
 
 1. Paste the command to your cloud shell terminal to connect to the cluster.
+
+You will also be prompted to authorize cloud shell - you can safely click the Authorize button.
+
+![Authorize cloud Shell](./img/1-authorize-cloud-shell.png)
 
 To check if you're successfully connected to the cluster, you can run `kubectl get nodes` and you should see the output similar to this one:
 

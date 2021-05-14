@@ -28,7 +28,7 @@ If we try to access the ingress gateways' external IP address, we will get back 
 To get the ingress gateways external IP address, run the command below and look at the `EXTERNAL-IP` column value:
 
 ```bash
-$ kubectl get svc -l=istio=ingressgateway  -n istio-system
+$ kubectl get svc -l=istio=ingressgateway -n istio-system
 NAME                   TYPE           CLUSTER-IP   EXTERNAL-IP      PORT(S)                                                                      AGE
 istio-ingressgateway   LoadBalancer   10.0.98.7    50.130.100.200   15021:31395/TCP,80:32542/TCP,443:31347/TCP,31400:32663/TCP,15443:31525/TCP   9h
 ```

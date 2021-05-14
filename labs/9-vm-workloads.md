@@ -6,10 +6,10 @@ After we've created a Kubernetes cluster, we can download, install Istio, and co
 
 ## Installing Istio on a Kubernetes cluster
 
-Let's download Istio 1.9.0:
+Let's download Istio 1.9.5:
 
 ```bash
-$ curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.9.0 sh -
+$ curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.9.5 sh -
 ```
 
 With Istio downloaded, we can install it using the default profile with automatic WorkloadEntry creation:
@@ -20,7 +20,7 @@ istioctl install --set values.pilot.env.PILOT_ENABLE_WORKLOAD_ENTRY_AUTOREGISTRA
 
 Next, we will deploy a separate gateway that we will use to expose the Istio's control plane to the virtual machine. The Istio package we downloaded contains a script we can use to generate the YAML that will deploy an Istio operator that creates the new gateway called `istio-eastwestgateway`.
 
-Go to the folder where you downloaded Istio (e.g. `istio-1.9.0`) and run this script:
+Go to the folder where you downloaded Istio (e.g. `istio-1.9.5`) and run this script:
 
 ```bash
 samples/multicluster/gen-eastwest-gateway.sh --single-cluster | istioctl install -y -f -
@@ -120,7 +120,10 @@ Now it's time to create and configure a virtual machine. I am running the virtua
 
 >In this example, we run a simple Python HTTP server on port 80. You could configure any other service on a different port. Just make sure you configure the security and firewall rules accordingly.
 
+From the instance details page, click the SSH dropdown and select "View gcloud command". You can run that command to set up the SSH connection with the instance (i.e. create the SSH keys).
+
 1. Copy the files from `vm-files` folder to the home folder on the instance. Replace `USERNAME` and `INSTANCE_IP` accordingly.
+
 
 ```bash
 $ scp vm-files/* [USERNAME]@[INSTANCE_IP]:~
@@ -133,7 +136,7 @@ mesh.yaml                                            100%  667    14.4KB/s   00:
 root-cert.pem                                        100% 1094    23.5KB/s   00:00
 ```
 
-2. SSH into the instance and copy the root certificate to `/etc/certs`:
+2. SSH into the instance and copy the root certificate to `/etc/certs` (you can use the comamnd from the instance details page in the SSH dropdown):
 
 ```bash
 sudo mkdir -p /etc/certs
@@ -150,7 +153,7 @@ sudo cp istio-token /var/run/secrets/tokens/istio-token
 4. Download and install the Istio sidecar package:
 
 ```bash
-curl -LO https://storage.googleapis.com/istio-release/releases/1.9.0/deb/istio-sidecar.deb
+curl -LO https://storage.googleapis.com/istio-release/releases/1.9.5/deb/istio-sidecar.deb
 sudo dpkg -i istio-sidecar.deb
 ```
 
@@ -184,6 +187,8 @@ With all files in place, we can start Istio on the virtual machine:
 ```bash
 sudo systemctl start istio
 ```
+
+You can check that the `istio` service is running with `systemctl status istio`.
 
 At this point, the virtual machine is configured to talk with the Istio's control plane in the Kubernetes cluster.
 
@@ -254,7 +259,7 @@ We can also run a workload on the virtual machine. Switch to the instance and ru
 
 ```bash
 $ sudo python3 -m http.server 80
-Serving HTTP on 0.0.0.0 port 8000 (http://0.0.0.0:8000/) ...
+Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
 If you try to curl to the instance IP directly, you will get back a response (directory listing): 
@@ -305,7 +310,7 @@ hello-vm-10.128.0.7   12m   10.128.0.7
 We can now use the Kubernetes service name `hello-vm.vm-namespace` to access the workload on the virtual machine. Let's run a Pod inside the cluster and try to access the service from there:
 
 ```
-$ kubectl run curl --image=radial/busyboxplus:curl -i --tty
+$ kubectl run curl --image=radial/busyboxplus:curl -i --tty --rm
 If you don't see a command prompt, try pressing enter.
 [ root@curl:/ ]$
 ```

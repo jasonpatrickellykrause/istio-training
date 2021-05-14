@@ -2,7 +2,6 @@
 
 Let's deploy the web frontend workload first using `kubectl apply -f envoy-demo-apps.yaml`.
 
-
 We will create an Envoy filter that adds a header `api-version` to the HTTP response:
 
 ```yaml
@@ -59,7 +58,7 @@ server: istio-envoy
 
 Similarly, we can use the `istioctl proxy-config listener [podname] -o json` to get the Envoy configuration and see where the Lua filter was added.
 
-Here's a snippet from the above JSON configuration. Notice the Lua filter was injected just befroe the router filter:
+Here's a snippet from the above JSON configuration. Notice the Lua filter was injected just before the router filter:
 
 ```json
 ...

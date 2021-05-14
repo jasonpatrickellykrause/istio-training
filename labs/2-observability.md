@@ -6,7 +6,7 @@ For Grafana and Kiali to work, we will first have to install the Prometheus addo
 
 ## Deploying a sample app
 
-To see some requests and traffic we will deploy an Nginx instance first.
+To see some requests and traffic we will deploy an Nginx instance first. Note that this assumes you have Istio installed and `default` namespace is labeled for Istio proxy injection. Check the [Installing Istio lab](./1-installing-istio.md) for more information.
 
 ```yaml
 apiVersion: v1
@@ -43,7 +43,6 @@ spec:
         ports:
         - containerPort: 80
 ```
-
 
 Save the above YAML to `my-nginx.yaml` and create the deployment using `kubectl apply -f my-nginx.yaml`.
 
@@ -97,6 +96,8 @@ Commercial support is available at
 </html>
 ```
 
+Alternatively, you can open the IP address in the browser to see the default Nginx page.
+
 ## Looking at logs
 
 You can make a couple of requests to the `$NGINX_IP` and then take a look at the logs from the `my-nginx` Pod, specifically the `istio-proxy` container. You can look at the logs using the `kubectl logs [pod_name] -c istio-proxy` command (replace the `pod_name` with the name of the Nginx pod on your cluster). 
@@ -104,11 +105,8 @@ You can make a couple of requests to the `$NGINX_IP` and then take a look at the
 Here’s a sample JSON log entry:
 
 ```json
-{"response_code":200,"upstream_cluster":"inbound|80||","protocol":"HTTP/1.1","start_time":"2021-05-10T18:35:40.449Z","method":"GET","duration
-":1,"user_agent":"curl/7.64.0","response_code_details":"via_upstream","authority":"35.230.126.202","upstream_service_time":"0","request_id":"
-fde11243-0206-983c-bc60-b774c0886139","response_flags":"-","downstream_remote_address":"10.138.15.205:23950","route_name":"default","connecti
-on_termination_details":null,"upstream_host":"127.0.0.1:80","upstream_local_address":"127.0.0.1:53330","bytes_received":0,"bytes_sent":612,"d
-ownstream_local_address":"10.44.0.21:80","upstream_transport_failure_reason":null,"path":"/","x_forwarded_for":null,"requested_server_name":null}
+[2021-05-14T20:56:00.842Z] "GET / HTTP/1.1" 200 - via_upstream - "-" 0 612 0 0 "-" "curl/7.64.0" "d42d4b51-9776-95d2-9934-27c3c301084e" "35.202.60.24" "127.0.0.1:80" inbound|80|| 127.0.0.1:48620 10.0.2.12:80 10.128.0.3:54211 - default
+[2021-05-14T20:56:02.211Z] "GET / HTTP/1.1" 200 - via_upstream - "-" 0 612 0 0 "-" "curl/7.64.0" "87a62107-b188-9d79-bc1f-576813f18844" "35.202.60.24" "127.0.0.1:80" inbound|80|| 127.0.0.1:48604 10.0.2.12:80 10.0.2.1:4920 - default
 ```
 
 ## Prometheus
@@ -129,7 +127,7 @@ service/prometheus created
 deployment.apps/prometheus created
 ```
 
-To open the Prometheus dashboard, we can use the dashboard command in the Istio CLI:
+Once the Prometheus pod starts, we can use the `dashboard` command to open the Prometheus Dashboard:
 
 ```sh
 $ getistio istioctl dashboard prometheus
@@ -140,7 +138,7 @@ We can now open http://localhost:9090 in a browser to get to the Prometheus dash
 
 ![Prometheus Dashboard](./img/2-prometheus-ui.png)
 
-Let's make a couple of requests to the $NGINX_IP environment variable we've created at the beginning. Then, from the Prometheus UI you can search for one of the Istio metrics (`istio_requests_total` for example) to get the idea on which data points are being collected.
+Open another terminal tab (click the **+** button) and let's make a couple of requests to the $NGINX_IP environment variable we've created at the beginning. Then, from the Prometheus UI you can search for one of the Istio metrics (`istio_requests_total` for example) to get the idea on what data is being collected for requests.
 
 Here's an example element from the Prometheus UI:
 
@@ -172,7 +170,7 @@ configmap/istio-services-grafana-dashboards created
 
 >This Grafana installation is not intended for running in production, as it's not tuned for performance or security.
 
-Kubernetes deploys Grafana in the `istio-system` namespace. To access Grafana, we can use the `istioctl dashboard` command:
+Kubernetes deploys Grafana in the `istio-system` namespace. To access Grafana, we can use the `dashboard` command:
 
 ```bash
 $ getistio istioctl dashboard grafana
@@ -205,7 +203,6 @@ The performance dashboard shows us the Istio main components cost in terms of re
 
 ![Istio Performance Dashboard](./img/2-grafana-perf-dashboard.png)
 
-
 4. Istio Service Dashboard
 
 The service dashboard allows us to view details about our services in the mesh.
@@ -214,8 +211,11 @@ We can get information about the request volume, success rate, durations, and de
 
 ![Istio Service Dashboard](./img/2-grafana-service-dashboard.png)
 
+5. Istio Wasm Extension Dashboard
 
-5. Istio Workload Dashboard
+This dashboards shows the data about Wasm Vvirtual machines, proxy resource usage and information caching and fetching the remote Wasm modules. 
+
+6. Istio Workload Dashboard
 
 This dashboard provides us a detailed breakdown of metrics for a workload.
 
@@ -256,13 +256,19 @@ service/tracing created
 service/zipkin created
 ```
 
-We can open the Zipkin dashboard by running `istioctl dashboard zipkin`. From the UI we can select the criteria for the trace lookups. Click the button and select `serviceName` and then `my-nginx.default` service from the dropdown and click the search button (or press Enter) to search the traces.
+We can open the Zipkin dashboard by running `getistio istioctl dashboard zipkin`. From the UI we can select the criteria for the trace lookups. Before we do that, make sure you make a couple of requests to the Nginx server so there are some traces we can look at.
+
+Click the button and select `serviceName` and then `my-nginx.default` service from the dropdown and click the search button (or press Enter) to search the traces.
 
 ![Zipkin Dashboard](./img/2-zipkin-dashboard.png)
 
-We can click on individual traces to dig deeper into the different spans. The detailed view will show us the duration of calls between the services, as well as the request details, such as method, protocol, status code, and similar. Since we only have 1 service running (Nginx), you won't see a lot of details. Later on, we will return to Zipkin and explore the traces in more details.
+We can click on individual traces to dig deeper into the different spans. The detailed view will show us the duration of calls between the services, as well as the request details, such as method, protocol, status code, and similar. 
+
+The figure below shows traces for the web frontend and customers application we'll use in later labs.
 
 ![Zipkin trace details](./img/2-zipkin-trace-details.png)
+
+Since we only have 1 service running (Nginx), you won't see a lot of details. Later on, we will return to Zipkin and explore the traces in more details.
 
 ## Mesh Observability with Kiali
 
@@ -283,16 +289,26 @@ service/kiali created
 deployment.apps/kiali created
 ```
 
-Note that if you see any errors such as `no matches for kind "MonitoringDashboard" in version "monitoringkiali.io/v1alpha"`, re-run the `kubectl apply` command again. The issue is that there might be a race condition when installing the CRD (custom resource definition) and resources that are defined by that CRD.
+Note that if you see any errors such as `no matches for kind "MonitoringDashboard" in version "monitoringkiali.io/v1alpha"`, re-run the above `kubectl apply` command again. The issue is that there might be a race condition when installing the CRD (custom resource definition) and resources that are defined by that CRD.
 
-We can open Kiali using `getistio istioctl dashboard kiali`.
+We can open Kiali using `getistio istioctl dashboard kiali` and use the web preview to open it.
 
 Kiali can generate a service graph like the one in the figure below. 
 
 ![Kiali Graph](./img/2-kiali-graph.png)
+
+To view the graph of the current system, click the **Graph** link from the sidebar, then select the default namespace from the "Select Namespaces" dropdown. Make a couple of requests to the Nginx service and Kiali will draw the graph based on the information from the proxies.
 
 The graph shows us the service topology and visualizes how the services communicate. It also shows the inbound and outbound metrics as well as traces by connecting to Jaeger and Grafana (if installed). Colors in the graph represent the health of the service mesh. A node colored red or orange might need attention. The color of an edge between components represents the health of the requests between those components. The node shape indicates the type of components,  such as services, workloads, or apps.
 
 The health of nodes and edges is refreshed automatically based on the user’s preference. The graph can also be paused to examine a particular state, or replayed to re-examine a particular period.
 
 Kiali provides actions to create, update, and delete Istio configuration, driven by wizards. We can configure request routing, fault injection, traffic shifting, and request timeouts, all from the UI. If we have any existing Istio configuration already deployed, Kiali can validate it and report on any warnings or errors.  
+
+## Cleanup
+
+To remote the Nginx application, run:
+
+```sh
+kubectl delete -f my-nginx.yaml`
+```

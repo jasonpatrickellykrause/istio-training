@@ -192,18 +192,18 @@ while true; do curl http://$GATEWAY_URL/; done
 We should start noticing some of the requests taking longer than usual. Let's open Grafana and observe these delays.
 
 ```bash
-$ istioctl dash grafana
+$ getistio istioctl dash grafana
 ```
 
-When Grafana opens, click Home and the Istio Service Dashboards. On the dashboard, make sure to select the `customers.default.svc.cluster.local` in the Service dropdown.
+When Grafana opens, click **Home** and the **Istio Service Dashboard**. On the dashboard, make sure to select the `web-frontend.default.svc.cluster.local` in the Service dropdown.
 
-If we scroll down the page, you will notice the increased duration on the **Incoming Request Duration by Source** graph, as shown in the figure below. 
+Expand the **Service Workloads** section and you will notice the increased duration on the **Incoming Request Duration by Service Workload** graph, as shown in the figure below. 
 
 ![Incoming Request Duration by Source](./img/4-incoming-req-duration.png)
 
 You can notice the same delay being reported on the `web-frontend.default.svc.cluster.local` service side.
 
-Let's see how this delay shows up in Zipkin. Open Zipkin with `istioctl dash zipkin`. On the main screen, select the `serviceName` and `web-frontend.default`, then add the `minDuration` criteria and enter `5s` and click the search button to find traces.
+Let's see how this delay shows up in Zipkin. Open Zipkin with `getistio istioctl dash zipkin`. On the main screen, select the `serviceName` and `web-frontend.default`, then add the `minDuration` criteria and enter `5s` and click the search button to find traces.
 
 Click on one of the traces to open the details page. On the details page, we will notice the duration is 5 seconds. We will also see the `response_flags` tag set to `DI`. "DI" indicates that the request was delayed.
 
@@ -235,7 +235,16 @@ spec:
 
 Save the above YAML to `customers-fault.yaml` and update the VirtualService with `kubectl apply -f customers-fault.yaml`.
 
-Just like before, we will start noticing failures from the request loop. If we go back to Grafana and open the Istio Service Dashboard, we will notice the client success rate dropping and the increase in the 500 responses on the **Incoming Requests by Source and Response Code** graph, as shown in the figure.
+Just like before, we will start noticing failures from the request loop. 
+
+Go back to Grafana and open the **Istio Mesh Dashboard**. Note how the global success rate has dropped as well as the graph showing 5xx responses.
+
+![500s](./img/4-5xx-rate.png)
+
+
+From the same dashboard, we can click the `web-frontend.default` workload from the list of workloads to open a dedicated dashboard for that workload.
+
+Expand the **Outbound Services** and you'll notice a graph called "Outgoing Requests By Destination And Response Code". The graph will show a clear breakdown of HTTP 200 and HTTP 500 responses from the customers service.
 
 ![Grafana and HTTP 500s](./img/4-grafana-500s.png)
 
@@ -243,11 +252,13 @@ There's a similar story in Zipkin. If we search for traces again (we can remove 
 
 ![Traces with errors](./img/4-zipkin-trace-500.png)
 
-Let's also open Kiali (`istioctl dash kiali`) and look at the service graph by clicking the Graph item. You will notice how the `web-frontend` service has a red border, as shown below.
+If you click on the trace you will notice the `response_flags` are set to FI, which stands for Failure Injection.
+
+Let's also open Kiali (`getistio istioctl dash kiali`) and look at the service graph by clicking the Graph link from the sidebar. You will notice how the `web-frontend` service has a red border, as shown below.
 
 ![Kiali error graph](./img/4-kiali-error-graph.png)
 
- If we click on the `web-frontend` service and look at the sidebar on the right, you will notice the HTTP requests' details. The graph shows the percentage of success and failures and both of those numbers are around 50%, which corresponds to the percentage value we set in the VirtualService.
+If we click on the `web-frontend` service and look at the sidebar on the right, you will notice the HTTP requests' details. The graph shows the percentage of success and failures. The success rate of outgoing requests is around 50%, which corresponds to the percentage value we set in the VirtualService.
 
 ## Cleanup
 
@@ -258,5 +269,5 @@ kubectl delete deploy web-frontend customers-{v1,v2}
 kubectl delete svc customers web-frontend
 kubectl delete vs customers web-frontend
 kubectl delete dr customers
-kubectl delete gateway gataway
+kubectl delete gateway gateway
 ```

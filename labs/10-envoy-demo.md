@@ -114,13 +114,12 @@ Now that we have the cluster name, we can look up more details. To get an output
 $ istioctl proxy-config cluster web-frontend-58d497b6f8-lwqkg --fqdn customers.default.svc.cluster.local
 SERVICE FQDN                            PORT     SUBSET     DIRECTION     TYPE     DESTINATION RULE
 customers.default.svc.cluster.local     80       -          outbound      EDS      customers.default
-customers.default.svc.cluster.local     80       v1         outbound      EDS      customers.default
 ```
 
 Finally, using the cluster name, we can look up the actual endpoints the request will end up at:
 
 ```bash
-$ istioctl proxy-config endpoints  web-frontend-58d497b6f8-lwqkg --cluster "outbound|80|v1|customers.default.svc.cluster.local"
+$ istioctl proxy-config endpoints web-frontend-58d497b6f8-lwqkg --cluster "outbound|80||customers.default.svc.cluster.local"
 ENDPOINT            STATUS      OUTLIER CHECK     CLUSTER
 10.120.0.4:3000     HEALTHY     OK                outbound|80|v1|customers.default.svc.cluster.local
 ```
