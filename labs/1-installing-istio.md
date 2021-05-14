@@ -19,9 +19,49 @@ In this training you will be using a Kubernetes instance running on Google Cloud
 
 The instructor will give you account information you can use to log into [Google Cloud Platform](https://cloud.google.com/).
 
-Once logged in, click the Active Cloud Shell button on the top-right of the screen as shown in the figure below:
+After you've logged in click the Organization and Project dropdown on the top left of the screen as shown in the figure:
+
+![Select project](./img/1-no-organization.png)
+
+From the organization/project window select the organization (there should be only one) and then click the project name that shows up in the list of projects (there should also be only one project in the list).
+
+![Select org and project](./img/1-project-org-select.png)
+
+
+Once you've selected the project and logged in, click the **Activate Cloud Shell** button on the top-right of the screen as shown in the figure below:
 
 ![Activate Cloud Shell](./img/1-activate-cloudshell.png)
+
+This is the terminal you will use to go through the labs. You will also be prompted to authorize cloud shell - you can safely click the Authorize button.
+
+![Authorize cloud Shell](./img/1-authorize-cloud-shell.png)
+
+### Connecting to the Kubernetes cluster
+
+A Kubernetes cluster was provisioned for you. In order to connect to it from the Cloud Shell, you need to run a GCloud CLI command.
+
+1. Click the hamburger button on the top left side of the screen.
+1. From the Compute section, select **Kubernetes Engine** and click **Clusters**.
+
+  ![Cluster list](./img/1-cluster-list.png)
+
+1. From the context menu (click the three dots), click the **Connect** button.
+1. Under the Command-line access, click the **Copy** button to copy the gcloud command to your clipboard.
+
+  ![Command access](./img/1-cmd-access.png)
+
+1. Paste the command to your cloud shell terminal to connect to the cluster.
+
+To check if you're successfully connected to the cluster, you can run `kubectl get nodes` and you should see the output similar to this one:
+
+```sh
+user@cloudshell:~$ kubectl get nodes
+NAME                                                 STATUS   ROLES    AGE   VERSION
+project-name-default-pool-e46ed8ba-0sqm   Ready    <none>   23m   v1.18.17-gke.100
+project-name-default-pool-e46ed8ba-vkdk   Ready    <none>   23m   v1.18.17-gke.100
+project-name-default-pool-e46ed8ba-xr0n   Ready    <none>   23m   v1.18.17-gke.100
+user@cloudshell:~$
+```
 
 ### Install GetIstio CLI
 
@@ -31,7 +71,9 @@ The first step is to download GetIstio CLI. You can install GetIstio on macOS an
 curl -sL https://tetrate.bintray.com/getistio/download.sh | bash
 ```
 
-We can run the version command to ensure GetIstio is successfully installed. For example:
+After installation completes, open a new tab terminal (click the + button in the top bar of the cloud shell).
+
+We can now run the version command to ensure GetIstio is successfully installed. For example:
 
 ```sh
 $ getistio version
@@ -57,9 +99,15 @@ To install the demo profile of Istio on a currently active Kubernetes cluster, w
 getistio istioctl install --set profile=demo
 ```
 
-GetIstio will check the cluster to make sure it is ready for Istio installation and it will install Istio once you confirm the installation.
+GetIstio will check the cluster to make sure it is ready for Istio installation. Make sure you confirm the installation by when prompted by typing "y" and GetIstio will proceed with installation.
 
-Once the installation completes, we can run the version again (`getistio version`) you’ll notice that the output shows the control plane and data plane versions installed on the cluster.
+Once the installation completes you will see the following line in the output:
+
+```sh
+✔ Istio is installed and verified successfully
+```
+
+We can run the version comand again (`getistio version`). You’ll notice that the output shows the control plane and data plane versions installed on the cluster.
 
 ```sh
 $ getistio version
@@ -123,28 +171,29 @@ If we look at the Pods, you will notice there are two containers in the Pod:
 $ kubectl get po
 NAME                        READY   STATUS    RESTARTS   AGE
 my-nginx-6b74b79f57-hmvj8   2/2     Running   0          62s
-```
+``` 
 
 Similarly, describing the Pod shows Kubernetes created both an `nginx` container and an `istio-proxy` container:
 
 ```
 $ kubectl describe po my-nginx-6b74b79f57-hmvj8
+...
 Events:
   Type    Reason     Age   From               Message
   ----    ------     ----  ----               -------
-  Normal  Scheduled  118s  default-scheduler  Successfully assigned default/my-nginx-6b74b79f57-hmvj8 to minikube
-  Normal  Pulling    117s  kubelet            Pulling image "docker.io/istio/proxyv2:1.9.0"
-  Normal  Pulled     116s  kubelet            Successfully pulled image "docker.io/istio/proxyv2:1.9.0" in 1.102544635s
-  Normal  Created    115s  kubelet            Created container istio-init
-  Normal  Started    115s  kubelet            Started container istio-init
-  Normal  Pulling    115s  kubelet            Pulling image "nginx"
-  Normal  Created    78s   kubelet            Created container nginx
-  Normal  Pulled     78s   kubelet            Successfully pulled image "nginx" in 36.157915646s
-  Normal  Started    77s   kubelet            Started container nginx
-  Normal  Pulling    77s   kubelet            Pulling image "docker.io/istio/proxyv2:1.9.0"
-  Normal  Pulled     76s   kubelet            Successfully pulled image "docker.io/istio/proxyv2:1.9.0" in 1.050876635s
-  Normal  Created    76s   kubelet            Created container istio-proxy
-  Normal  Started    76s   kubelet            Started container istio-proxy
+  Normal  Scheduled  28s   default-scheduler  Successfully assigned default/my-nginx-9b596c8c4-2v5d7 to gke-fico-may-2021-1-009-default-pool-e46ed8ba-0sqm
+  Normal  Pulling    27s   kubelet            Pulling image "tetrate-docker-getistio-docker.bintray.io/proxyv2:1.9.1-tetrate-v0"
+  Normal  Pulled     26s   kubelet            Successfully pulled image "tetrate-docker-getistio-docker.bintray.io/proxyv2:1.9.1-tetrate-v0"
+  Normal  Created    26s   kubelet            Created container istio-init
+  Normal  Started    25s   kubelet            Started container istio-init
+  Normal  Pulling    25s   kubelet            Pulling image "nginx"
+  Normal  Pulled     20s   kubelet            Successfully pulled image "nginx"
+  Normal  Created    19s   kubelet            Created container nginx
+  Normal  Started    19s   kubelet            Started container nginx
+  Normal  Pulling    19s   kubelet            Pulling image "tetrate-docker-getistio-docker.bintray.io/proxyv2:1.9.1-tetrate-v0"
+  Normal  Pulled     17s   kubelet            Successfully pulled image "tetrate-docker-getistio-docker.bintray.io/proxyv2:1.9.1-tetrate-v0"
+  Normal  Created    17s   kubelet            Created container istio-proxy
+  Normal  Started    17s   kubelet            Started container istio-proxy
 ```
 
 To remove the deployment, run the delete command:
@@ -156,18 +205,11 @@ deployment.apps "my-nginx" deleted
 
 ### Updating and uninstalling Istio
 
-In case we want to update the current installation or change the configuration profile, we will need to update the `IstioOperator` resource deployed earlier.
+**Note**
+If you uninstall Istio, make sure you install it again, because the remaining labs depend on Istio being installed.
 
-To remove the installation, we have to delete the `IstioOperator`, for example:
+To completely uninstall Istio from the cluster, run the following command:
 
-```bash
-$ kubectl delete istiooperator -n istio-system demo-istio-install
+```sh
+getistio istioctl x uninstall --purge
 ```
-
-Once the operator deletes Istio, we can also remove the operator by running:
-
-```bash
-$ istioctl operator remove
-```
-
-Make sure to delete the IstioOperator resource first before deleting the operator. Otherwise, there might be leftover Istio resources. 
