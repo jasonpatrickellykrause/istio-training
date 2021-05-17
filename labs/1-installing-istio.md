@@ -25,6 +25,8 @@ After you've logged in click the Organization and Project dropdown on the top le
 
 From the organization/project window select the organization (there should be only one) and then click the project name that shows up in the list of projects (there should also be only one project in the list).
 
+Note that you might have to click the **ALL** tab to see the list of all projects and select the project from there.
+
 ![Select org and project](./img/1-project-org-select.png)
 
 Once you've selected the project and logged in, click the **Activate Cloud Shell** button on the top-right of the screen as shown in the figure below:
