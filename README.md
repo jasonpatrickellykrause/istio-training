@@ -13,3 +13,4 @@ Labs:
 1. [VM workloads](./labs/9-vm-workloads.md)
 1. [Envoy Demo](./labs/10-envoy-demo.md)
 1. [Envoy Filters](./labs/11-envoy-filter.md)
+1. [Upgrading Istio Installations](./labs/12-upgrading-istio.md)
