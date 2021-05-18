@@ -187,6 +187,12 @@ Save the above YAML to `customers-v1-v2.yaml` and create the resources with `kub
 
 To ensure everything is deployed and works correctly, open the `GATEWAY_URL` and ensure we are getting the responses back from the Customers v1. we should only see the NAME column in the response.
 
+You can set the `GATEWAY_URL` variable like this:
+
+```sh
+export GATEWAY_URL=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+```
+
 We will update the `customers` VirtualService and update how the traffic is being routed between two versions of the customers service.
 
 Let's look at a YAML that routes the traffic to Customers v2, if the request contains a header `user: debug`. If the header is not set, we are routed to the Customers v1.

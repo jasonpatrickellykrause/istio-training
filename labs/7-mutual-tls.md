@@ -177,6 +177,12 @@ web-frontend-659f65f49-cbhvl    1/1     Running   0          13m
 
 If we try and access the web page from the `GATEWAY_URL`, we will get the web page with the customer service's response.
 
+You can set the `GATEWAY_URL` variable like this:
+
+```sh
+export GATEWAY_URL=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+```
+
 Accessing the `GATEWAY_URL` works because of the permissive mode, where plain text traffic is sent to the services that don't have the proxy. In this case, the ingress gateway sends plain text traffic to the Web frontend because there's no proxy.
 
 If we open Kiali with `getistio istioctl dash kiali` and look at the Graph, you will notice that Kiali detects calls being made from the ingress gateway to `web-frontend`. However, the calls being made to the `customers` service are coming from `unknown` service. This is because there's no proxy next to the web frontend, and Istio doesn't know who, where or what that service is.

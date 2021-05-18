@@ -189,6 +189,12 @@ To generate some traffic, let's open a separate terminal window and start making
 while true; do curl http://$GATEWAY_URL/; done
 ```
 
+>You can set the `GATEWAY_URL` variable like this:
+
+  ```sh
+  export GATEWAY_URL=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+  ```
+
 We should start noticing some of the requests taking longer than usual. Let's open Grafana and observe these delays.
 
 ```bash

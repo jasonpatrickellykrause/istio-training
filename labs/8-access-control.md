@@ -250,6 +250,12 @@ Save the above YAML to `allow-web-frontend-customers.yaml` and create the policy
 
 As soon as the policy is created, we will see the web frontend working again - it will get the customer service responses. You can try that it works by opening the GATEWAY_URL in the browser.
 
+You can set the `GATEWAY_URL` variable like this:
+
+```sh
+export GATEWAY_URL=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+```
+
 We have used multiple authorization policies to explicitly allow calls from the ingress to the front end and from the frontend to the customer service. Using a deny-all policy is a good way to start because we can control, manage, and then explicitly allow the communication we want to happen between services.
 
 ## Cleanup

@@ -35,6 +35,12 @@ istio-ingressgateway   LoadBalancer   10.0.98.7    50.130.100.200   15021:31395/
 
 Throughout the rest of the course, we'll be using `GATEWAY_URL` in examples and text when we talk about the ingress gateway's external IP.
 
+You can set the `GATEWAY_URL` variable like this:
+
+```sh
+export GATEWAY_URL=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+```
+
 The next step is to create the Hello World deployment and service:
 
 ```yaml

@@ -151,6 +151,12 @@ Save the above YAML to `web-frontend-vs.yaml` and create the VirtualService usin
 
 We can now open the `GATEWAY_URL` in the browser, and get to the Web Frontend that shows the customers list from the Customers service, as shown in the figure below.
 
+You can set the `GATEWAY_URL` variable like this:
+
+```sh
+export GATEWAY_URL=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+```
+
 ![Web Frontend and Customers v1](./img/5-webfrontend-customers-v1.png)
 
 If we deployed the Customer service version v2, the responses we'd get back when calling the `http://customers.default.svc.cluster.local` would be random. They would either come from the v2 or v1 version of the Customers service.
