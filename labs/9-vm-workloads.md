@@ -143,49 +143,49 @@ From the instance details page, click the SSH dropdown and select "View gcloud c
 
 2. SSH into the instance and copy the root certificate to `/etc/certs` (you can use the comamnd from the instance details page in the SSH dropdown):
 
-```bash
-sudo mkdir -p /etc/certs
-sudo cp root-cert.pem /etc/certs/root-cert.pem
-```
+    ```bash
+    sudo mkdir -p /etc/certs
+    sudo cp root-cert.pem /etc/certs/root-cert.pem
+    ```
 
 3. Copy the `istio-token` file to `/var/run/secrets/tokens` folder:
 
-```bash
-sudo mkdir -p /var/run/secrets/tokens
-sudo cp istio-token /var/run/secrets/tokens/istio-token
-```
+    ```bash
+    sudo mkdir -p /var/run/secrets/tokens
+    sudo cp istio-token /var/run/secrets/tokens/istio-token
+    ```
 
 4. Download and install the Istio sidecar package:
 
-```bash
-curl -LO https://storage.googleapis.com/istio-release/releases/1.9.5/deb/istio-sidecar.deb
-sudo dpkg -i istio-sidecar.deb
-```
+    ```bash
+    curl -LO https://storage.googleapis.com/istio-release/releases/1.9.5/deb/istio-sidecar.deb
+    sudo dpkg -i istio-sidecar.deb
+    ```
 
 5. Copy `cluster.env` to `/var/lib/istio/envoy/`:
 
-```bash
-sudo cp cluster.env /var/lib/istio/envoy/cluster.env
-```
+    ```bash
+    sudo cp cluster.env /var/lib/istio/envoy/cluster.env
+    ```
 
 6. Copy Mesh config (`mesh.yaml`) to `/etc/istio/config/mesh`:
 
-```bash
-sudo cp mesh.yaml /etc/istio/config/mesh
-```
+    ```bash
+    sudo cp mesh.yaml /etc/istio/config/mesh
+    ```
 
 7. Add the istiod host to the `/etc/hosts` file:
 
-```bash
-sudo sh -c 'cat hosts >> /etc/hosts'
-```
+    ```bash
+    sudo sh -c 'cat hosts >> /etc/hosts'
+    ```
 
 8. Change the ownership of files in `/etc/certs` and `/var/lib/istio/envoy` to the Istio proxy:
 
-```bash
-sudo mkdir -p /etc/istio/proxy
-sudo chown -R istio-proxy /var/lib/istio /etc/certs /etc/istio/proxy /etc/istio/config /var/run/secrets /etc/certs/root-cert.pem
-```
+    ```bash
+    sudo mkdir -p /etc/istio/proxy
+    sudo chown -R istio-proxy /var/lib/istio /etc/certs /etc/istio/proxy /etc/istio/config /var/run/secrets /etc/certs/root-cert.pem
+    ```
 
 With all files in place, we can start Istio on the virtual machine:
 
