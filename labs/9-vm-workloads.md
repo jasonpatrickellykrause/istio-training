@@ -125,16 +125,21 @@ From the instance details page, click the SSH dropdown and select "View gcloud c
 1. Copy the files from `vm-files` folder to the home folder on the instance. Replace `USERNAME` and `INSTANCE_IP` accordingly.
 
 
-```bash
-$ scp vm-files/* [USERNAME]@[INSTANCE_IP]:~
-Enter passphrase for key '/Users/peterj/.ssh/id_rsa':
-bash: warning: setlocale: LC_ALL: cannot change locale (en_US.UTF-8)
-cluster.env                                          100%  589    12.6KB/s   00:00
-hosts                                                100%   38     0.8KB/s   00:00
-istio-token                                          100%  906    19.4KB/s   00:00
-mesh.yaml                                            100%  667    14.4KB/s   00:00
-root-cert.pem                                        100% 1094    23.5KB/s   00:00
-```
+    ```bash
+    $ scp vm-files/* [USERNAME]@[INSTANCE_IP]:~
+    Enter passphrase for key '/Users/peterj/.ssh/id_rsa':
+    bash: warning: setlocale: LC_ALL: cannot change locale (en_US.UTF-8)
+    cluster.env                                          100%  589    12.6KB/s   00:00
+    hosts                                                100%   38     0.8KB/s   00:00
+    istio-token                                          100%  906    19.4KB/s   00:00
+    mesh.yaml                                            100%  667    14.4KB/s   00:00
+    root-cert.pem                                        100% 1094    23.5KB/s   00:00
+    ```
+     
+    Alternatively, you an use `gcloud` command to copy the files over: 
+    ```sh
+    gcloud compute scp vm-files/* [INSTANCE_NAME]:~ --zone=[INSTANCE_ZONE]
+    ```
 
 2. SSH into the instance and copy the root certificate to `/etc/certs` (you can use the comamnd from the instance details page in the SSH dropdown):
 
