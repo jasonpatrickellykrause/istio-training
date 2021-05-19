@@ -95,6 +95,11 @@ Save the above YAML to `web-frontend.yaml` and create the resource using `kubect
 Finally, we will deploy the customers v1 service.
 
 ```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: customers
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -114,6 +119,7 @@ spec:
         app: customers
         version: v1
     spec:
+      serviceAccountName: customers
       containers:
         - image: gcr.io/tetratelabs/customers:1.0.0
           imagePullPolicy: Always
