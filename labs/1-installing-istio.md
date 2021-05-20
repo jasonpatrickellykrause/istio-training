@@ -15,7 +15,54 @@ We can also run a Kubernetes cluster locally on your computer using one of the f
 
 When using a local Kubernetes cluster, make sure your computer meets the minimum requirements for Istio installation (e.g. 16384 MB RAM and 4 CPUs). Also, ensure the Kubernetes cluster version is v1.19.0 or higher.
 
-In this training you will be using a Kubernetes instance running on Google Cloud Platform.
+The section that follow explain how to use Minikube or Kubernetes cluster on Google Cloud Platform.
+
+## Using Minikube 
+
+You can use Minikube with a Hypervisor. Hypervisor choice will depend on your operating system. To install Minikube and the Hypervisor, you can follow the [installation instructions](https://kubernetes.io/docs/tasks/tools/install-minikube/). 
+
+Once we have installed Minikube, we can create and launch the Kubernetes cluster. The below command starts a Minikube cluster using VirtualBox hypervisor.
+
+```bash
+minikube start --memory=16384 --cpus=4 --driver=virtualbox
+```
+
+Make sure to replace the `--driver=virtualbox` with the name of the Hypervisor you're using. See the table below for available options.
+
+| Flag name | More information |
+| --- | --- |
+| `hyperkit` | [HyperKit](https://github.com/moby/hyperkit) |
+| `hyperv` | [Hyper-V](https://docs.microsoft.com/en-us/virtualization/hyper-v-on-windows/) | 
+| `kvm2` | [KVM](https://www.linux-kvm.org/page/Main_Page) |
+|`docker` | [Docker](https://hub.docker.com/search?q=&type=edition&offering=community&sort=updated_at&order=desc) |
+| `podman` | [Podman](https://podman.io/getting-started/installation.html)
+| `parallels` | [Parallels](https://www.parallels.com/) |
+| `virtualbox` | [VirtualBox](https://www.virtualbox.org/) | 
+| `vmware` | [VMware Fusion](https://www.vmware.com/products/fusion.html) | 
+
+To check if the cluster is running, we can use the Kubernetes CLI and run the `kubectl get nodes` command:
+
+```bash
+$ kubectl get nodes
+NAME       STATUS   ROLES    AGE    VERSION
+minikube   Ready    master   151m   v1.19.0
+```
+
+>Note: if you installed Minikube using [Brew package manager](https://brew.sh), you also have Kubernetes CLI installed.
+
+### Kubernetes CLI
+
+If you need to install the Kubernetes CLI, follow [these instructions](https://kubernetes.io/docs/tasks/tools/install-kubectl/).
+
+We can run `kubectl version` to check if the CLI is installed. You should see the output similar to this one:
+
+```bash
+$ kubectl version
+Client Version: version.Info{Major:"1", Minor:"19", GitVersion:"v1.19.2", GitCommit:"f5743093fd1c663cb0cbc89748f730662345d44d", GitTreeState:"clean", BuildDate:"2020-09-16T21:51:49Z", GoVersion:"go1.15.2", Compiler:"gc", Platform:"darwin/amd64"}
+Server Version: version.Info{Major:"1", Minor:"19", GitVersion:"v1.19.0", GitCommit:"e19964183377d0ec2052d1f1fa930c4d7575bd50", GitTreeState:"clean", BuildDate:"2020-08-26T14:23:04Z", GoVersion:"go1.15", Compiler:"gc", Platform:"linux/amd64"}
+```
+
+## Using Google Cloud Platform
 
 The instructor will give you account information you can use to log into [Google Cloud Platform](https://cloud.google.com/).
 
@@ -66,7 +113,7 @@ project-name-default-pool-e46ed8ba-xr0n   Ready    <none>   23m   v1.18.17-gke.1
 user@cloudshell:~$
 ```
 
-### Install GetIstio CLI
+## Install GetIstio CLI
 
 The first step is to download GetIstio CLI. You can install GetIstio on macOS and Linux platforms. We can use the following command to download the latest version of GetIstio and certified Istio:
 
