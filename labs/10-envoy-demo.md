@@ -2,7 +2,121 @@
 
 Let's deploy Web frontend and customer service applications as an example to see how Envoy determines where to send the requests from the web frontend to the customer service (`customers.default.svc.cluster.local`).
 
-Deploy the apps using `kubectl apply -f envoy-demo-apps.yaml`.
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-frontend
+  labels:
+    app: web-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web-frontend
+  template:
+    metadata:
+      labels:
+        app: web-frontend
+        version: v1
+    spec:
+      containers:
+        - image: gcr.io/tetratelabs/web-frontend:1.0.0
+          imagePullPolicy: Always
+          name: web
+          ports:
+            - containerPort: 8080
+          env:
+            - name: CUSTOMER_SERVICE_URL
+              value: 'http://customers.default.svc.cluster.local'
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: web-frontend
+  labels:
+    app: web-frontend
+spec:
+  selector:
+    app: web-frontend
+  ports:
+    - port: 80
+      name: http
+      targetPort: 8080
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: web-frontend
+spec:
+  hosts:
+    - '*'
+  gateways:
+    - gateway
+  http:
+    - route:
+        - destination:
+            host: web-frontend.default.svc.cluster.local
+            port:
+              number: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: customers-v1
+  labels:
+    app: customers
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: customers
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: customers
+        version: v1
+    spec:
+      containers:
+        - image: gcr.io/tetratelabs/customers:1.0.0
+          imagePullPolicy: Always
+          name: svc
+          ports:
+            - containerPort: 3000
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: customers
+  labels:
+    app: customers
+spec:
+  selector:
+    app: customers
+  ports:
+    - port: 80
+      name: http
+      targetPort: 3000
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: gateway
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - '*'
+```
+
+Save the above to `envoy-demo-apps.yaml` and deploy the apps using `kubectl apply -f envoy-demo-apps.yaml`.
 
 Using the `istioctl proxy-config` command, we can list all listeners of the web frontend pod.
 
