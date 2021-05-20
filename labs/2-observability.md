@@ -102,9 +102,9 @@ Alternatively, you can open the IP address in the browser to see the default Ngi
 
 You can make a couple of requests to the `$NGINX_IP` and then take a look at the logs from the `my-nginx` Pod, specifically the `istio-proxy` container. You can look at the logs using the `kubectl logs [pod_name] -c istio-proxy` command (replace the `pod_name` with the name of the Nginx pod on your cluster). 
 
-Here’s a sample JSON log entry:
+Here’s a sample log entry:
 
-```json
+```sh
 [2021-05-14T20:56:00.842Z] "GET / HTTP/1.1" 200 - via_upstream - "-" 0 612 0 0 "-" "curl/7.64.0" "d42d4b51-9776-95d2-9934-27c3c301084e" "35.202.60.24" "127.0.0.1:80" inbound|80|| 127.0.0.1:48620 10.0.2.12:80 10.128.0.3:54211 - default
 [2021-05-14T20:56:02.211Z] "GET / HTTP/1.1" 200 - via_upstream - "-" 0 612 0 0 "-" "curl/7.64.0" "87a62107-b188-9d79-bc1f-576813f18844" "35.202.60.24" "127.0.0.1:80" inbound|80|| 127.0.0.1:48604 10.0.2.12:80 10.0.2.1:4920 - default
 ```
