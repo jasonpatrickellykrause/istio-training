@@ -253,13 +253,96 @@ $ kubectl delete deployment my-nginx
 deployment.apps "my-nginx" deleted
 ```
 
-### Updating and uninstalling Istio
-
-**Note**
-If you uninstall Istio, make sure you install it again, because the remaining labs depend on Istio being installed.
+### Uninstalling Istio
 
 To completely uninstall Istio from the cluster, run the following command:
 
 ```sh
 getistio istioctl x uninstall --purge
+```
+
+## Installing Istio using IstioOperator
+
+To get started we'll initialize the default Istio operator first. The init command deploys the operator to the `istio-operator` image and it configures it to watch the `istio-system` namespace. That means we'll have to create the IstioOperator resouce in the `istio-system` namespace so it gets picked up by the operator.
+
+Let's initalize the operator first:
+
+```sh
+getistio istioctl operator init
+```
+
+Istio operator is deployed to the `istio-operator` namespace:
+
+```sh
+$ kubectl get po  -n istio-operator
+NAME                              READY   STATUS    RESTARTS   AGE
+istio-operator-7c67896564-jbcpf   1/1     Running   0          99s
+```
+
+Next, we can create the IstioOperator resource to install Istio. We'll use the default profile - that profile includes the `istiod` and an `istio-ingressgateway`:
+
+```yaml
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+metadata:
+  namespace: istio-system
+  name: default-installation
+spec:
+  profile: default
+```
+
+Save the above to `default-installation.yaml` and create the resource with `kubectl apply -f default-installation.yaml`.
+
+We can check the status of the installation by listing the Istio operator resource. The installation is completed once the STATUS column shows HEALTY:
+
+```sh
+$ kubectl get iop -A
+NAMESPACE      NAME                   REVISION   STATUS        AGE
+istio-system   default-installation              HEALTHY       67s
+```
+
+>Note: you can also look at the more detailed installation logs from the Istio operator pod.
+
+### Updating the operator
+
+To update the operator we can use kubectl and apply the updated IstioOperator resource. For example, if we wanted to include an egress gateway we could update the IstioOperator resource like this:
+
+```yaml
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+metadata:
+  namespace: istio-system
+  name: default-installation
+spec:
+  profile: default
+  components:
+    egressGateways:
+    - name: istio-egressgateway
+      enabled: true
+```
+
+Save the above YAML to `iop-egress.yaml` and apply it to the cluster using `kubectl apply -f iop-egress.yaml`.
+
+If you list the IstioOperator resource you'll notice the status has changed to `RECONCILING` and once the egress gateway is deployed, the status changes back to HEALTHY.
+
+Another option for updating the Istio installation is to create separate IstioOperator resources. That way, you can have a resource for the base installation and separately apply different operators using an empty installation profile. For example, here's how you could create a separate IstioOperator resource that only deploys an internal ingress gateway:
+
+```yaml
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+metadata:
+  name: internal-gateway-only
+  namespace: istio-system
+spec:
+  profile: empty
+  components:
+    ingressGateways:
+      - namespace: some-namespace
+        name: ilb-gateway
+        enabled: true
+        label:
+          istio: ilb-gateway
+        k8s:
+          serviceAnnotations:
+            networking.gke.io/load-balancer-type: "Internal"
 ```
