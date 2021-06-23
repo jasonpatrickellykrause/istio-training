@@ -346,3 +346,19 @@ spec:
           serviceAnnotations:
             networking.gke.io/load-balancer-type: "Internal"
 ```
+
+## Cleanup 
+
+Note that you'll be using the same cluster throughout the workshop, so you don't have to delete Istio. However, if you want to try it out, you can always delete and re-install it again.
+
+To delete Istio we have to delete the IstioOperator resource:
+
+```sh
+kubectl delete iop default-installation -n istio-system
+```
+
+Once Istio is deleted, you have to also remove the IstioOperator:
+
+```sh
+istioctl operator remove
+```
