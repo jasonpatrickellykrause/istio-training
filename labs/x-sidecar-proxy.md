@@ -2,7 +2,7 @@
 
 In this lab we'll take a look at the iptables rules that are responsible for intercepting inbound and outbound traffic to the application pod.
 
-We'll start with a simple httpbin deployment below.
+We'll start with a simple `httpbin` deployment below.
 
 ```yaml
 apiVersion: v1
@@ -168,3 +168,13 @@ ISTIO_REDIRECT  all  --  anywhere             anywhere
 ```
 
 This chain is involved in the output path of the request (i.e. traffic leaving the proxy/application) - this is also the place where the checks for istio-proxy GID/UID (1337) is being done to prevent redirecting the traffic back to the proxy again.
+
+## Cleanup
+
+Delete the created resources:
+
+```sh
+kubectl delete svc httpbin
+kubectl delete deploy httpbin
+kubectl delete serviceaccount httpbin
+```
