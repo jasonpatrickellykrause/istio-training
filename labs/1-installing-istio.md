@@ -279,51 +279,53 @@ NAME                              READY   STATUS    RESTARTS   AGE
 istio-operator-7c67896564-jbcpf   1/1     Running   0          99s
 ```
 
-Next, we can create the IstioOperator resource to install Istio. We'll use the default profile - that profile includes the `istiod` and an `istio-ingressgateway`:
+Since we're using Istio 1.9, we'll have to manually create the `istio-system` namespace. With newer versions of Istio, namespace is created automatically by the operator.
+
+Next, we can create the IstioOperator resource to install Istio. We'll use the demo profile - that profile includes the `istiod`, an `istio-ingressgateway` and an egress gateway:
 
 ```yaml
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
 metadata:
   namespace: istio-system
-  name: default-installation
+  name: demo-installation
 spec:
-  profile: default
+  profile: demo
 ```
 
-Save the above to `default-installation.yaml` and create the resource with `kubectl apply -f default-installation.yaml`.
+Save the above to `demo-installation.yaml` and create the resource with `kubectl apply -f demo-installation.yaml`.
 
 We can check the status of the installation by listing the Istio operator resource. The installation is completed once the STATUS column shows HEALTY:
 
 ```sh
 $ kubectl get iop -A
 NAMESPACE      NAME                   REVISION   STATUS        AGE
-istio-system   default-installation              HEALTHY       67s
+istio-system   demo-installation              HEALTHY       67s
 ```
 
 >Note: you can also look at the more detailed installation logs from the Istio operator pod.
 
 ### Updating the operator
 
-To update the operator we can use kubectl and apply the updated IstioOperator resource. For example, if we wanted to include an egress gateway we could update the IstioOperator resource like this:
+To update the operator we can use kubectl and apply the updated IstioOperator resource. For example, if we wanted to remove the egress gateway we could update the IstioOperator resource like this:
 
 ```yaml
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
 metadata:
   namespace: istio-system
-  name: default-installation
+  name: demo-installation
 spec:
   profile: default
   components:
     egressGateways:
     - name: istio-egressgateway
-      enabled: true
+      enabled: false
 ```
 
 Save the above YAML to `iop-egress.yaml` and apply it to the cluster using `kubectl apply -f iop-egress.yaml`.
 
-If you list the IstioOperator resource you'll notice the status has changed to `RECONCILING` and once the egress gateway is deployed, the status changes back to HEALTHY.
+If you list the IstioOperator resource you'll notice the status has changed to `RECONCILING` and once the egress is removed, the status changes back to HEALTHY.
 
 Another option for updating the Istio installation is to create separate IstioOperator resources. That way, you can have a resource for the base installation and separately apply different operators using an empty installation profile. For example, here's how you could create a separate IstioOperator resource that only deploys an internal ingress gateway:
 
@@ -354,7 +356,7 @@ Note that you'll be using the same cluster throughout the workshop, so you don't
 To delete Istio we have to delete the IstioOperator resource:
 
 ```sh
-kubectl delete iop default-installation -n istio-system
+kubectl delete iop demo-installation -n istio-system
 ```
 
 Once Istio is deleted, you have to also remove the IstioOperator:
@@ -362,3 +364,5 @@ Once Istio is deleted, you have to also remove the IstioOperator:
 ```sh
 istioctl operator remove
 ```
+
+Finally, remove the `istio-system` namespace: `kubectl delete ns istio-system`.
