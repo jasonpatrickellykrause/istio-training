@@ -316,7 +316,7 @@ metadata:
   namespace: istio-system
   name: demo-installation
 spec:
-  profile: default
+  profile: demo
   components:
     egressGateways:
     - name: istio-egressgateway
