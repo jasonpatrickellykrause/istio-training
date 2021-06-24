@@ -102,7 +102,7 @@ metadata:
   name: hello-world
 spec:
   hosts:
-    - "*"
+    - '*'
   gateways:
     - gateway
   http:
