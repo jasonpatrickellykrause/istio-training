@@ -164,7 +164,7 @@ kubectl port-forward pod/[ingress-gateway-pod] -n istio-system 15000:15000
 If we run cURL against `GATEWAY_URL` or open it in the browser, we will get back a response of `Hello World`:
 
 ```bash
-$ curl -v -H "Host: hello.com" http://GATEWAY_URL/
+$ curl -v -H "Host: hello.com" http://$GATEWAY_URL/
 *   Trying GATEWAY_URL...
 * TCP_NODELAY set
 * Connected to GATEWAY_URL (GATEWAY_URL) port 80 (#0)
