@@ -14,3 +14,5 @@ Labs:
 1. [Envoy Demo](./labs/10-envoy-demo.md)
 1. [Envoy Filters](./labs/11-envoy-filter.md)
 1. [Upgrading Istio Installations](./labs/12-upgrading-istio.md)
+1. [Istio CLI](./labs/x-istioctl.md)
+1. [Sidecar proxy](./labs/x-sidecar-proxy.md)

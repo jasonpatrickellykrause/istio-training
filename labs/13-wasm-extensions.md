@@ -1,6 +1,6 @@
 # Wasm Extensions
 
-We will be using [GetEnvoy CLI](https://getenvoy.io) to initialize, build and test an Envoy Wasm module. Finally, we will show a way to configure the Wasm module using the EnvoyFilter resource and deploy it to Envoy sidecars in a Kubernetes cluster.
+We will be using [TinyGo](https://tinygo.org), [proxy-wasm-go-sdk](https://github.com/tetratelabs/proxy-wasm-go-sdk) and [GetEnvoy CLI](https://getenvoy.io) to build and test an Envoy Wasm extension. Then we'll show a way to configure the Wasm module using the EnvoyFilter resource and deploy it to Envoy sidecars in a Kubernetes cluster.
 
 For our first example, we’ll start with something trivial and write a simple Wasm module using TinyGo that adds a custom header to response headers.
 
@@ -9,203 +9,372 @@ For our first example, we’ll start with something trivial and write a simple W
 Let's get started by downloading GetEnvoy CLI and installing it to `/usr/local/bin`:
 
 ```sh
-curl -L https://getenvoy.io/cli | bash -s -- -b /usr/local/bin
+curl -L https://getenvoy.io/cli | sudo bash -s -- -b /usr/local/bin
 ```
 
 Once downloaded, let's run it to make sure all is good:
 
 ```sh
 $ getenvoy --version
-getenvoy version 0.2.1-rc2
+getenvoy version 0.4.1
+```
+
+## Installing TinyGo
+
+The SDK we'll be using is powered by TinyGo as Wasm doesn't support the official Go compiler. 
+
+Let's download and install the TinyGo:
+
+```sh
+wget https://github.com/tinygo-org/tinygo/releases/download/v0.18.0/tinygo_0.18.0_amd64.deb
+sudo dpkg -i tinygo_0.18.0_amd64.deb
+```
+
+You can run `tinygo version` to check the installation is successful:
+
+```sh
+$ tinygo version
+tinygo version 0.18.0 linux/amd64 (using go version go1.16.5 and LLVM version 11.0.0)
 ```
 
 ## Scaffolding the Wasm module
 
-To initialize a new Wasm module, we can use the getenvoy extension init command. This command features a wizard that guides you through the process of initializing a new extension.
+We'll start by creating the a new folder for our extension, initializing the Go module and downloading the SDK dependency:
 
 ```sh
-$ getenvoy extension init
-What kind of extension would you like to create?
-Use the arrow keys to navigate: ↓ ↑ → ←
-? **Choose extension category:
-  ▸ HTTP Filter
-    Network Filter
-    Access Logger**
+$ mkdir header-filter && cd header-filter
+$ go mod init header-filter
+$ go mod edit -require=github.com/tetratelabs/proxy-wasm-go-sdk@main
+$ go mod download github.com/tetratelabs/proxy-wasm-go-sdk
 ```
 
-Using the cursors keys, you can select one of the following module categories:
-
-- HTTP Filter
-- Network Filter
-- Access Logger
-
-Select the HTTP Filter and press Enter to continue.
-
-Next, we need to decide which language we want to write the Wasm module in. The two options are Rust and TinyGo.
-
-```sh
-$ getenvoy extension init
-What kind of extension would you like to create?
-✔ Category HTTP Filter
-Use the arrow keys to navigate: ↓ ↑ → ←
-? **Choose programming language:
-    Rust
-  ▸ TinyGo**
-```
-
-Select TinyGo and press Enter to continue.
-
->Note: TinyGo is a project that allows us to produce WebAssembly code. It is a subset of the Go language and not everything is supported yet. You can check the list of packages supported by TinyGo here.
-
-If you haven't invoked the command in an empty directory, you'll have to provide a directory where the module files will be generated. If you execute the `init` command from an empty folder, the CLI will skip the output directory selection.
-
-In my case, I'll put my module into `/home/peter/header-filter` directory:
-
-```sh
-$ getenvoy extension init
-What kind of extension would you like to create?
-✔ Category HTTP Filter
-✔ Language TinyGo
-✔ Provide output directory: /home/peter/header-filter|
-✔ Output directory **/home/peter/header-filter** 
-```
-
-Finally, you need to decide on the module name. The CLI will suggest a name using the following pattern: `[company-name].filters.[filter-type].[folder-name]`. With the folder and module type we selected, the suggested name is `mycompany.filters.http.header_filter`.
-
-I'll change the name to `tetrate.filters.http.header_filter` and press Enter.
-
-```sh
-$ getenvoy extension init
-What kind of extension would you like to create?
-✔ Category HTTP Filter
-✔ Language TinyGo
-✔ Provide output directory: /home/peter/header-filter|
-✔ Output directory /home/peter/header-filter
-✔ Extension name tetrate.filters.http.header_filter
-✔ Provide extension name: tetrate.filters.http.header_filter|
-Great! Let me help you with that!
-Scaffolding a new extension:
-Generating files in /home/peter/header-filter:
-✔ .getenvoy/extension/extension.yaml
-✔ .gitignore
-✔ go.mod
-✔ go.sum
-✔ main.go
-✔ main_test.go
-Done!
-
-Hint:
-Next time you can skip the wizard by running
-  getenvoy extension init --category envoy.filters.http --language tinygo --name tetrate.filters.http.header_filter /home/peter/header-filter
-```
-
-The CLI will scaffold the new module in the provided folder. The folder contains the source code as well as the extension.yaml file that's used by the CLI.
-
-## Setting additional headers on HTTP response
-
-Let's open the `main.go` file and look through the code. This sample module already implements setting additional headers on the HTTP response.
-
-Here's how headers are propagated from the rootContext, set on the httpContext, and finally set as HTTP response headers:
-
-1. Root context gets created when the `newRootContext` function is called from the main function. This sets the `rootContextID` and the map with additional headers.
-2. When a new HTTP request comes to the filter, the `NewHttpContext` function is called. This function creates an instance of an `httpContext`.
-3. When response headers are being processed in `OnHttpResponseHeaders`, we iterate through the `additionalHeaders` map on the `httpContext` object and for each header name/value we call the `SetHttpResponseHeader` function.
-
-Let's add another header to the `additionalHeaders` map in the `newRootContext` function:
+Next, let's create the `main.go` file where the code for our WASM extension will live:
 
 ```go
-func newRootContext(rootContextID uint32) proxywasm.RootContext {
-	return &rootContext{
-       contextID: rootContextID, 
-       additionalHeaders: map[string]string{"additional": "header", "hello": "world"}
-  }
+package main
+
+import (
+	"github.com/tetratelabs/proxy-wasm-go-sdk/proxywasm"
+	"github.com/tetratelabs/proxy-wasm-go-sdk/proxywasm/types"
+)
+
+func main() {
+	proxywasm.SetVMContext(&vmContext{})
+}
+
+type vmContext struct {
+	// Embed the default VM context here,
+	// so that we don't need to reimplement all the methods.
+	types.DefaultVMContext
+}
+
+// Override types.DefaultVMContext.
+func (*vmContext) NewPluginContext(contextID uint32) types.PluginContext {
+	return &pluginContext{}
+}
+
+type pluginContext struct {
+	// Embed the default plugin context here,
+	// so that we don't need to reimplement all the methods.
+	types.DefaultPluginContext
+}
+
+// Override types.DefaultPluginContext.
+func (*pluginContext) NewHttpContext(contextID uint32) types.HttpContext {
+	return &httpHeaders{contextID: contextID}
+}
+
+type httpHeaders struct {
+	// Embed the default http context here,
+	// so that we don't need to reimplement all the methods.
+	types.DefaultHttpContext
+	contextID uint32
+}
+
+func (ctx *httpHeaders) OnHttpRequestHeaders(numHeaders int, endOfStream bool) types.Action {
+	proxywasm.LogInfo("OnHttpRequestHeaders")
+	return types.ActionContinue
+}
+
+func (ctx *httpHeaders) OnHttpResponseHeaders(numHeaders int, endOfStream bool) types.Action {
+	proxywasm.LogInfo("OnHttpResponseHeaders")
+	return types.ActionContinue
+}
+
+func (ctx *httpHeaders) OnHttpStreamDone() {
+	proxywasm.LogInfof("%d finished", ctx.contextID)
 }
 ```
 
-## Building the Wasm module
+Save the above contents to a file called `main.go`.
 
-Because we are using the GetEnvoy CLI, we can build and run Wasm modules with ease. Let's build the module (the .wasm file) first, using the getenvoy extension build command. From the module root folder, run:
+Let's build the filter to check everything is good:
 
 ```sh
-$ getenvoy extension build
-Unable to find image 'getenvoy/extension-tinygo-builder:0.2.1-rc2' locally
-0.2.1-rc2: Pulling from getenvoy/extension-tinygo-builder
-cf4624f9a482: Pull complete
-4188a7f566c8: Pull completed4ac7fbae4e8: Pull complete
-ed009636d5a5: Pull complete
-89e01905c793: Pull complete
-6a715c2414fe: Pull complete
-9e575dc059fc: Pull complete
-Digest: sha256:33fcf5d165fb8fe798fdafaa872c9a30eb376b123b6eefec1d5039069e79400aStatus: Downloaded newer image for getenvoy/extension-tinygo-builder:0.2.1-rc2
-go: downloading github.com/tetratelabs/proxy-wasm-go-sdk v0.1.0
+tinygo build -o main.wasm -scheduler=none -target=wasi main.go
 ```
 
-If this is your first time running the build command, the GetEnvoy CLI will pull down the Docker image used for building the module and then build the module. The first build might take a while, especially if the Docker image needs to be pulled, but the subsequent builds will be much faster.
-Once built, the extension.wasm file is copied to the build folder:
+The build command should run successfully and it should generate a file called `main.wasm`.
 
-```sh
-$ ls build/
-extension.wasm
+To test the extension we've built, we'll use `getenvoy` to run a local Envoy instance.
+
+First, we need an Envoy config that will configure the extension:
+
+```yaml
+static_resources:
+  listeners:
+    - name: main
+      address:
+        socket_address:
+          address: 0.0.0.0
+          port_value: 18000
+      filter_chains:
+        - filters:
+            - name: envoy.http_connection_manager
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                stat_prefix: ingress_http
+                codec_type: auto
+                route_config:
+                  name: local_route
+                  virtual_hosts:
+                    - name: local_service
+                      domains:
+                        - "*"
+                      routes:
+                        - match:
+                            prefix: "/"
+                          direct_response:
+                            status: 200
+                            body:
+                              inline_string: "hello world\n"
+                http_filters:
+                  - name: envoy.filters.http.wasm
+                    typed_config:
+                      "@type": type.googleapis.com/udpa.type.v1.TypedStruct
+                      type_url: type.googleapis.com/envoy.extensions.filters.http.wasm.v3.Wasm
+                      value:
+                        config:
+                          vm_config:
+                            runtime: "envoy.wasm.runtime.v8"
+                            code:
+                              local:
+                                filename: "main.wasm"
+                  - name: envoy.filters.http.router
+
+admin:
+  access_log_path: "/dev/null"
+  address:
+    socket_address:
+      address: 0.0.0.0
+      port_value: 8001
 ```
 
-Eventually, we want to deploy this module as an EnvoyFilter to the Istio service mesh. However, let's see how we can run this outside of the cluster first.
+Save the above to `envoy.yaml` file.
 
-## Running the Wasm module
+The Envoy configuration sets up a single listener on port 18000 that returns a direct response (HTTP 200) with body `hello world`. Inside the `http_filters` section we're configuring the `envoy.filters.http.wasm` filter and referencing the local WASM file (`main.wasm`) we've built earlier.
 
-To run the module we can use the `getenvoy extension run` command. We can specify the path to the extension.wasm file. The GetEnvoy CLI downloads the Envoy binary, generates a sample Envoy configuration, and starts the Envoy process in the foreground.
-
-Let's run the command, but in the background, so we can make requests to the running Envoy instance. From the module root folder, run:
+Let's run the Envoy with this configuration in the background
 
 ```sh
-$ getenvoy extension run &
-✔ .getenvoy/extension/examples/default/README.md
-✔ .getenvoy/extension/examples/default/envoy.tmpl.yaml
-✔ .getenvoy/extension/examples/default/example.yaml
-✔ .getenvoy/extension/examples/default/extension.json
-Done!
-... [envoy logs] ...
+getenvoy run -c envoy.yaml &
 ```
 
-As part of the run command, the GetEnvoy CLI creates an Envoy configuration that's used to demo the Wasm module. The demo configuration configures an HTTP ingress listener (listening on http://0.0.0.0:10000) that uses our module and dispatches all incoming requests to a mock HTTP endpoint, running on 127.0.0.1:10001. The mock service responds to all requests with HTTP status 200.
-
-The figure below shows the request flow:
-
-![Request flow](./img/13-wasm-request-flow.png)
-
-With the module running in the background, let's use curl to send a request to http://0.0.0.0:10000:
+Envoy instance should start without any issues. Once it's started we can make a request to the port Envoy is listening on (`18000`):
 
 ```sh
-$ curl -v http://0.0.0.0:10000
-* Expire in 0 ms for 6 (transfer 0x55ebd47b9fb0)
-*   Trying 0.0.0.0...
-* TCP_NODELAY set
-* Expire in 200 ms for 4 (transfer 0x55ebd47b9fb0)
-* Connected to 0.0.0.0 (127.0.0.1) port 10000 (#0)
-> GET / HTTP/1.1
-> Host: 0.0.0.0:10000
-> User-Agent: curl/7.64.0
-> Accept: */*
->
+$ curl localhost:18000
+[2021-06-22 16:39:31.491][5314][info][wasm] [external/envoy/source/extensions/common/wasm/context.cc:1218] wasm log: OnHttpRequestHeaders
+[2021-06-22 16:39:31.491][5314][info][wasm] [external/envoy/source/extensions/common/wasm/context.cc:1218] wasm log: OnHttpResponseHeaders
+[2021-06-22 16:39:31.492][5314][info][wasm] [external/envoy/source/extensions/common/wasm/context.cc:1218] wasm log: 2 finished
+example body
+```
+
+The output shows the two log entries - one from the OnHttpRequestHeaders handler and the second one from the OnHttpResponseHeaders handler. The last line is the example response returned by the direct response configuration in the filter.
+
+You can stop the proxy by bringing the process to the foreground with `fg` and pressing CTRL+C to stop it.
+
+## Setting additional headers on HTTP response
+
+Let's open the `main.go` file and add an additional header to the response headers. We'll be updating the OnHttpResponseHeaders function to do that.
+
+We'll call the `AddHttpResponseHeader` function to add a new header. Update the OnHttpResponseHeaders function to look like this: 
+
+```go
+func (ctx *httpHeaders) OnHttpResponseHeaders(numHeaders int, endOfStream bool) types.Action {
+	proxywasm.LogInfo("OnHttpResponseHeaders")
+	err := proxywasm.AddHttpResponseHeader("my-new-header", "some-value-here")
+	if err != nil {
+		proxywasm.LogCriticalf("failed to add response header: %v", err)
+	}
+	return types.ActionContinue
+}
+```
+
+Let's rebuild the extension:
+
+```sh
+tinygo build -o main.wasm -scheduler=none -target=wasi main.go
+```
+
+And we can now re-run the Envoy proxy with the updated extension:
+
+```
+getenvoy run -c envoy.yaml &
+```
+
+Now if we send a request again (make sure to add the `-v` flag), we'll see the header that got added on the response:
+
+```sh
+$ curl -v localhost:18000
+...
 < HTTP/1.1 200 OK
-< content-length: 22
+< content-length: 13
 < content-type: text/plain
-< date: Wed, 21 Apr 2021 22:36:03 GMT
+< my-new-header: some-value-here
+< date: Mon, 22 Jun 2021 17:02:31 GMT
 < server: envoy
-< x-envoy-upstream-service-time: 1
-**< additional: header
-< hello: world**
 <
-Hi from mock service!
-* Connection #0 to host 0.0.0.0 left intact
+example body
 ```
 
-You will notice the two headers that were added by our Wasm module! Let's see how to deploy the module to all proxies running in the Istio service mesh.
+## Reading values from configuration
+
+Hardcoding values like that in code is never a good idea. Let's see how we can read the additional headers.
+
+1. Add the `additionalHeaders` and `contextID` to the `pluginContext` struct:
+
+  ```go
+  type pluginContext struct {
+    // Embed the default plugin context here,
+    // so that we don't need to reimplement all the methods.
+    types.DefaultPluginContext
+    additionalHeaders map[string]string
+    contextID         uint32
+  }
+  ```
+
+2. Update the `NewPluginContext` function to initialize the values:
+
+  ```go
+  func (*vmContext) NewPluginContext(contextID uint32) types.PluginContext {
+    return &pluginContext{contextID: contextID, additionalHeaders: map[string]string{}}
+  }
+  ```
+  
+3. In the `OnPluginStart` function we can now read in values from the Envoy configuration and store the key/value pairs in the `additionalHeaders` map:
+
+  ```go
+  func (ctx *pluginContext) OnPluginStart(pluginConfigurationSize int) types.OnPluginStartStatus {
+    // Get the plugin configuration
+    config, err := proxywasm.GetPluginConfiguration(pluginConfigurationSize)
+    if err != nil && err != types.ErrorStatusNotFound {
+      proxywasm.LogCriticalf("failed to load config: %v", err)
+      return types.OnPluginStartStatusFailed
+    }
+
+    // Read the config
+    scanner := bufio.NewScanner(bytes.NewReader(config))
+    for scanner.Scan() {
+      line := scanner.Text()
+      if strings.HasPrefix(line, "#") {
+        continue
+      }
+      // Each line in the config is in the "key=value" format
+      if tokens := strings.Split(scanner.Text(), "="); len(tokens) == 2 {
+        ctx.additionalHeaders[tokens[0]] = tokens[1]
+      }
+    }
+    return types.OnPluginStartStatusOK
+  }
+  ```
+
+To be able to access the configuration values we've set, we need to add the map to the HTTP context when we initialize it. To do that, we need to update the `httpheaders` struct first:
+
+```go
+type httpHeaders struct {
+	// Embed the default http context here,
+	// so that we don't need to reimplement all the methods.
+	types.DefaultHttpContext
+	contextID         uint32
+	additionalHeaders map[string]string
+}
+```
+
+Then, in the `NewHttpContext` function we can instantiate the httpHeaders with the additional headers map coming from the plugin context:
+
+```go
+func (ctx *pluginContext) NewHttpContext(contextID uint32) types.HttpContext {
+	return &httpHeaders{contextID: contextID, additionalHeaders: ctx.additionalHeaders}
+}
+```
+
+Finally, in order to set the headers we modiy the `OnHttpResponseHeaders` function, iterate through the `additionalHeaders` map and call the `AddHttpResponseHeader` for each item:
+
+```go
+func (ctx *httpHeaders) OnHttpResponseHeaders(numHeaders int, endOfStream bool) types.Action {
+	proxywasm.LogInfo("OnHttpResponseHeaders")
+
+	for key, value := range ctx.additionalHeaders {
+		if err := proxywasm.AddHttpResponseHeader(key, value); err != nil {
+				proxywasm.LogCriticalf("failed to add header: %v", err)
+				return types.ActionPause
+		}
+		proxywasm.LogInfof("header set: %s=%s", key, value)
+	}
+		
+	return types.ActionContinue
+}
+```
+
+Let's rebuild the extension again:
+
+```sh
+tinygo build -o main.wasm -scheduler=none -target=wasi main.go
+```
+
+Also, let's update the config file to include additional headers in the filter configuration:
+
+```yaml
+- name: envoy.filters.http.wasm
+  typed_config:
+    "@type": type.googleapis.com/udpa.type.v1.TypedStruct
+    type_url: type.googleapis.com/envoy.extensions.filters.http.wasm.v3.Wasm
+    value:
+      config:
+        vm_config:
+          runtime: "envoy.wasm.runtime.v8"
+          code:
+            local:
+              filename: "main.wasm"
+        # ADD THESE LINES
+        configuration:
+          "@type": type.googleapis.com/google.protobuf.StringValue
+          value: |
+            header_1=somevalue
+            header_2=secondvalue
+```
+
+With the filter updated we can re-run the proxy again. When you send a request you'll notice the headers we set in the filter configuration are added as response headers:
+
+```sh
+$ curl -v localhost:18000
+...
+< HTTP/1.1 200 OK
+< content-length: 13
+< content-type: text/plain
+< header_1: somevalue
+< header_2: secondvalue
+< date: Mon, 22 Jun 2021 17:54:53 GMT
+< server: envoy
+...
+```
 
 ## Deploying Wasm module to Istio using EnvoyFilter
 
 The resource we can use to deploy a Wasm module to Istio is called the EnvoyFilter. EnvoyFilter gives us the ability to customize the Envoy configuration. It allows us to modify values, configure new listeners or clusters, and add filters.
 
-In the previous example, there was no need to push or publish the extension.wasm file anywhere, as it was accessible by the Envoy proxy, because everything was running locally. However, now that we want to run the Wasm module in Envoy proxies that are part of the Istio service mesh, we need a way to make the extension.wasm file available to all those proxies so they can load and run it.
+In the previous example, there was no need to push or publish the `main.wasm` file anywhere, as it was accessible by the Envoy proxy, because everything was running locally. However, now that we want to run the Wasm module in Envoy proxies that are part of the Istio service mesh, we need a way to make the `main.wasm` file available to all those proxies so they can load and run it.
 
 Since Envoy can be extended using filters, we can use the Envoy HTTP Wasm filter to implement an HTTP filter with a Wasm module. This filter allows us to configure the Wasm module and to load the module file.
 
@@ -243,7 +412,7 @@ Note that the above snippet assumes a persistent disk running in GCP. This could
 
 Luckily for us there is another option. Remember the local field from the Envoy HTTP Wasm filter configuration? Well, there's also a remote field we can use to load the Wasm module from a remote location, a URL. This simplifies things a lot! We can upload the .wasm file to remote storage, get the public URL to the module, and then use it.
 
-In this example I've uploaded my module to my GCP storage account and made the file publicly accessible.
+In this example we'll upload the module to a GCP storage account and made the file publicly accessible.
 
 The updated configuration would now look like this:
 
@@ -259,89 +428,86 @@ vm_config:
 
 If you’re using Istio 1.9 or newer, you don’t have to provide the sha256 checksum, as Istio will fill that automatically. However, if you’re using Istio 1.8 or older, the sha256 checksum is required and it prevents the Wasm module from being downloaded each time. You can get the SHA by running sha256sum command.
 
-You can use the commands below to copy the built extension to the Google Cloud Storage and make it publicly accessible:
+Let's create a new storage bucket first (use your name/alias instead of the `wasm-bucket` value), using the `gsutil` command (the command is available in the GCP cloud shell): 
 
 ```sh
-BUCKET_NAME="[storage bucket name]"
-
-# Copy the extension to the storage bucket
-gsutil cp build/extension.wasm gs://$BUCKET_NAME
-
-# Make the extension readable to all users
-gsutil acl ch -u AllUsers:R gs://$BUCKET_NAME/extension.wasm
+gsutil mb gs://wasm-bucket
+Creating gs://wasm-bucket/...
 ```
 
-Here's how the EnvoyFilter resource that tells Envoy where to download the filter from looks like:
+Next, we use the commands below to copy the built extension to the Google Cloud Storage and make it publicly accessible:
+
+```sh
+BUCKET_NAME="wasm-bucket"
+
+# Copy the extension to the storage bucket
+gsutil cp main.wasm gs://$BUCKET_NAME
+
+# Make the extension readable to all users
+gsutil acl ch -u AllUsers:R gs://$BUCKET_NAME/main.wasm
+```
+
+The URL where the uploaded file is available is: `http://BUCKET_NAME.storage.googleapis.com/OBJECT_NAME`. For example `http://wasm-bucket.storage.googleapis.com/main.wasm`.
+
+We can now create the EnvoyFilter resource that tells Envoy where to download the extension as well as where to inject it (make sure you update the `uri` field with your bucket URI):
 
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
-  name: demo-extension-config
+  name: headers-extension
 spec:
   configPatches:
   - applyTo: EXTENSION_CONFIG
     patch:
       operation: ADD
       value:
-        name: demo-wasm-extension
+        name: headers-extension
         typed_config:
           "@type": type.googleapis.com/udpa.type.v1.TypedStruct
           type_url: type.googleapis.com/envoy.extensions.filters.http.wasm.v3.Wasm
           value:
             config:
               vm_config:
-                vm_id: demo-wasm-extension-vm
+                vm_id: headers-extension-vm
                 runtime: envoy.wasm.runtime.v8
                 code:
                   remote:
                     http_uri:
-                      uri: https://storage.googleapis.com/[bucket-name]/extension.wasm
+                      uri: https://wasm-bucket.storage.googleapis.com/main.wasm
+              configuration:
+                "@type": type.googleapis.com/google.protobuf.StringValue
+                value: |
+                  header_1=somevalue
+                  header_2=secondvalue
+  - applyTo: HTTP_FILTER
+    match:
+      context: SIDECAR_INBOUND
+      listener:
+        filterChain:
+          filter:
+            name: envoy.filters.network.http_connection_manager
+    patch:
+      operation: INSERT_BEFORE
+      value:
+        name: headers-extension
+        config_discovery:
+          config_source:
+            ads: {}
+            initial_fetch_timeout: 0s # wait indefinitely to prevent bad Wasm fetch
+          type_urls: [ "type.googleapis.com/envoy.extensions.filters.http.wasm.v3.Wasm"]
 ```
 
-Now that the filter is downloaded and optionally configured, we need a second EnvoyFilter to specify where in the filter chain we want to inject our Wasm module.
+Note that we’re deploying the EnvoyFilters to default namespace. We could also deploy them to a root namespace (e.g. `istio-system`) in case we wanted to apply the filter to all workloads in the mesh. Additionally, we could specify the selectors to pick the workloads to which we want to apply the filter.
 
-The second EnvoyFilter references the filter that was downloaded by the previous configuration  using the name `demo-wasm-extension`. It specifies where in the filter chain we want to inject our Wasm module.
-
-```yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
- name: demo-extension
-spec:
- configPatches:
- - applyTo: HTTP_FILTER
-   match:
-     context: SIDECAR_INBOUND
-     listener:
-       filterChain:
-         filter:
-           name: envoy.filters.network.http_connection_manager
-   patch:
-     operation: INSERT_BEFORE
-     value:
-       name: demo-wasm-extension
-       config_discovery:
-         config_source:
-           ads: {}
-           initial_fetch_timeout: 0s # wait indefinitely to prevent bad Wasm fetch
-         type_urls: [ "type.googleapis.com/envoy.extensions.filters.http.wasm.v3.Wasm"]
-```
-
-Note that we’re deploying the EnvoyFilters to default namespace. We could also deploy them to a root namespace (e.g. `istio-system`) in case we wanted to apply the filter to all workloads. Additionally, we could specify the selectors to pick the workloads to which we want to apply the filter.
-
-The first EnvoyFilter (`demo-extension-config`) configures and downloads the Wasm module from the remote URI. The second EnvoyFilter (demo-extension) inserts the downloaded module into the filter chain. Note that we’re referring to the module in the second filter using the name `demo-wasm-extension` -- this is the name we specified in the first module as well.
-Once you've updated the remote URI to your own module, save the both YAML listings above to `deploy-filter.yaml` and deploy it to a Kubernetes cluster with Istio installed:
+Save the above YAML to `envoyfilter.yaml` file and create it:
 
 ```sh
-$ kubectl apply -f deploy-filter.yaml
-envoyfilter.networking.istio.io/demo-extension-config created
-envoyfilter.networking.istio.io/demo-extension created
+$ kubectl apply -f envoyfilter.yaml
+envoyfilter.networking.istio.io/headers-extension created
 ```
 
 To try out the module, you can deploy a sample workload. 
-
-Before you deploy the sample workload, make sure you've labeled the namespace with `istio-injection=enabled` label! 
 
 I am using this httpbin example:
 
@@ -417,85 +583,34 @@ If you don't see a command prompt, try pressing enter.
 Once you get the prompt to the curl container, send a request to the `httpbin` service:
 
 ```sh
-/ $ curl -v http://httpbin:8000/get
-> GET /get HTTP/1.1
+/ $ curl -v http://httpbin:8000/headers
+> GET /headers HTTP/1.1
 > User-Agent: curl/7.35.0
 > Host: httpbin:8000
 > Accept: */*
 >
 < HTTP/1.1 200 OK
 < server: envoy
-< date: Wed, 21 Apr 2021 23:57:09 GMT
+< date: Mon, 22 Jun 2021 18:52:17 GMT
 < content-type: application/json
-< content-length: 631
+< content-length: 525
 < access-control-allow-origin: *
 < access-control-allow-credentials: true
-< x-envoy-upstream-service-time: 5
-**< additional: header
-< hello: world**
-<
+< x-envoy-upstream-service-time: 3
+< header_1: somevalue
+< header_2: secondvalue
+...
 ```
 
 Notice the two headers we defined in the Wasm module are being set in the response.
 
-## How to configure Wasm modules
+## Cleanup
 
-A fairly common development task is configuring your code, either through environment variables or configuration files.
-
-To provide configuration for your Wasm module, you can use the configuration field under the config section:
-
-```yaml
-...
-config:
-  vm_config:
-    vm_id: demo-wasm-extension-vm
-    runtime: envoy.wasm.runtime.v8
-    code:
-      remote:
-         http_uri:
-          uri: [wasm module URI]
-  configuration:
-    '@type': type.googleapis.com/google.protobuf.StringValue
-    value: |
-        environment=prod
-        user=peter
-        debug=1 
-...
-```
-
-The configuration settings from the above YAML are read and parsed in the `OnPluginStart` function:
-
-1. We read the configuration data using GetPluginConfiguration function
-2. We go through each line of the data
-3. We parse the KEY=VALUE pairs and add them as headers to the `additionalHeaders` map
-
->Note: Typically you would use a JSON format for your configuration. However, TinyGo does not support a JSON library at the moment, so we fallback to using a key/value pair format.
-
-You can now rebuild the module using getenvoy extension build and copy it to the remote URI defined in the EnvoyFilter YAML.
-
-Since we've modified the configuration, we'll have to reapply the updated EnvoyFilter. Once that’s applied we can use the curl Pod again and make a request to `httpbin:8000/get`:
+To delete all resource created during this lab, run the following:
 
 ```sh
-$ curl -v http://httpbin:8000/get
-> GET /get HTTP/1.1
-> User-Agent: curl/7.35.0
-> Host: httpbin:8000
-> Accept: */*
->
-< HTTP/1.1 200 OK
-< server: envoy
-< date: Thu, 22 Apr 2021 22:35:54 GMT
-< content-type: application/json
-< content-length: 631
-< access-control-allow-origin: *
-< access-control-allow-credentials: true
-< x-envoy-upstream-service-time: 3
-< additional: header
-< hello: world
-< environment: prod
-< user: peter
-< debug: 1
-...
+kubectl delete envoyfilter headers-extension
+kubectl delete deployment httpbin
+kubectl delete svc httpbin
+kubectl delete sa httpbin
 ```
-
-The configuration values we set in the EnvoyFilter YAML are now being set as response headers by our Wasm module.

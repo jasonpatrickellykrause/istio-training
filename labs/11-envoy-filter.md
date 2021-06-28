@@ -18,13 +18,15 @@ spec:
   - applyTo: HTTP_FILTER
     match:
       context: SIDECAR_INBOUND
+      proxy:
+        proxyVersion: '1\.9.*'
       listener:
         portNumber: 8080
         filterChain:
           filter:
-            name: "envoy.http_connection_manager"
+            name: "envoy.filters.network.http_connection_manager"
             subFilter:
-              name: "envoy.router"
+              name: "envoy.filters.http.router"
     patch:
       operation: INSERT_BEFORE
       value:
