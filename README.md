@@ -16,3 +16,4 @@ Labs:
 1. [Upgrading Istio Installations](./labs/12-upgrading-istio.md)
 1. [Istio CLI](./labs/x-istioctl.md)
 1. [Sidecar proxy](./labs/x-sidecar-proxy.md)
+1. [Wasm extensions](./labs/13-wasm-extensions.md)
