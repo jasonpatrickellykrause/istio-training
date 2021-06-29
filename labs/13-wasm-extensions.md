@@ -370,6 +370,101 @@ $ curl -v localhost:18000
 ...
 ```
 
+## Add a metric
+
+Let's add another feature - a counter that increases each time there's a request header called `hello` set.
+
+First, let's update the `pluginContext` to include the `helloHeaderCounter`:
+
+```go
+type pluginContext struct {
+	// Embed the default plugin context here,
+	// so that we don't need to reimplement all the methods.
+	types.DefaultPluginContext
+	additionalHeaders  map[string]string
+	contextID          uint32
+  // ADD THIS LINE
+	helloHeaderCounter proxywasm.MetricCounter 
+}
+```
+
+With the metric counter in the struct, we can now create it in the `NewPluginContext` function. We'll call the header `
+
+```go
+func (*vmContext) NewPluginContext(contextID uint32) types.PluginContext {
+	return &pluginContext{contextID: contextID, additionalHeaders: map[string]string{}, helloHeaderCounter: proxywasm.DefineCounterMetric("hello_header_counter")}
+}
+```
+
+Since we want need to check the incoming request headers to decide whether to increment the counter, we need to add the `helloHeaderCounter` to the `httpHeaders` struct as well:
+
+```go
+type httpHeaders struct {
+	// Embed the default http context here,
+	// so that we don't need to reimplement all the methods.
+	types.DefaultHttpContext
+	contextID          uint32
+	additionalHeaders  map[string]string
+  // ADD THIS LINE
+	helloHeaderCounter proxywasm.MetricCounter
+}
+```
+
+Also, we need to get the counter from the `pluginContext` and set it when we're creating the new HTTP context:
+
+```go
+// Override types.DefaultPluginContext.
+func (ctx *pluginContext) NewHttpContext(contextID uint32) types.HttpContext {
+	return &httpHeaders{contextID: contextID, additionalHeaders: ctx.additionalHeaders, helloHeaderCounter: ctx.helloHeaderCounter}
+}
+```
+
+Now that we've piped the `helloHeaderCounter` all the way through to the `httpHeaders`, we can use it in the `OnHttpRequestHeaders` function:
+
+```go
+func (ctx *httpHeaders) OnHttpRequestHeaders(numHeaders int, endOfStream bool) types.Action {
+	proxywasm.LogInfo("OnHttpRequestHeaders")
+
+	_, err := proxywasm.GetHttpRequestHeader("hello")
+	if err != nil {
+		// Ignore if header is not set
+		return types.ActionContinue
+	}
+
+	ctx.helloHeaderCounter.Increment(1)
+	proxywasm.LogInfo("hello_header_counter incremented")
+	return types.ActionContinue
+}
+```
+
+Here, we're checking if the "hello" request header is defined (note that we don't care about the header value) and if it's define we call the `Increment` function on the counter instance. Otherwise, if we we get an error from the `GetHttpRequestHeader` we'll just ignore it and return continue.
+
+Let's rebuild the extension again:
+
+```sh
+tinygo build -o main.wasm -scheduler=none -target=wasi main.go
+```
+
+And then re-run the Envoy proxy. Make a couple of requests like this:
+
+```sh
+curl -H "hello: something" localhost:18000
+```
+
+You'll notice the log Envoy log entry like this one:
+
+```text
+wasm log: hello_header_counter incremented
+```
+
+You can also use the admin address on port 8001 to check that the metric is being tracked:
+
+```sh
+$ curl localhost:8001/stats/prometheus | grep hello
+# TYPE envoy_hello_header_counter counter
+envoy_hello_header_counter{} 1
+```
+
 ## Deploying Wasm module to Istio using EnvoyFilter
 
 The resource we can use to deploy a Wasm module to Istio is called the EnvoyFilter. EnvoyFilter gives us the ability to customize the Envoy configuration. It allows us to modify values, configure new listeners or clusters, and add filters.
