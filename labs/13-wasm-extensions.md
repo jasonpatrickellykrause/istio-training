@@ -2,7 +2,7 @@
 
 We will be using [TinyGo](https://tinygo.org), [proxy-wasm-go-sdk](https://github.com/tetratelabs/proxy-wasm-go-sdk) and [GetEnvoy CLI](https://getenvoy.io) to build and test an Envoy Wasm extension. Then we'll show a way to configure the Wasm module using the EnvoyFilter resource and deploy it to Envoy sidecars in a Kubernetes cluster.
 
-For our first example, we’ll start with something trivial and write a simple Wasm module using TinyGo that adds a custom header to response headers.
+We'll start with something trivial for our first example and write a simple Wasm module using TinyGo that adds a custom header to response headers.
 
 ## Installing GetEnvoy CLI
 
@@ -21,7 +21,7 @@ getenvoy version 0.4.1
 
 ## Installing TinyGo
 
-The SDK we'll be using is powered by TinyGo as Wasm doesn't support the official Go compiler. 
+TinyGo powers the SDK we'll be using as Wasm doesn't support the official Go compiler. 
 
 Let's download and install the TinyGo:
 
@@ -39,7 +39,7 @@ tinygo version 0.18.0 linux/amd64 (using go version go1.16.5 and LLVM version 11
 
 ## Scaffolding the Wasm module
 
-We'll start by creating the a new folder for our extension, initializing the Go module and downloading the SDK dependency:
+We'll start by creating a new folder for our extension, initializing the Go module, and downloading the SDK dependency:
 
 ```sh
 $ mkdir header-filter && cd header-filter
@@ -54,55 +54,55 @@ Next, let's create the `main.go` file where the code for our WASM extension will
 package main
 
 import (
-	"github.com/tetratelabs/proxy-wasm-go-sdk/proxywasm"
-	"github.com/tetratelabs/proxy-wasm-go-sdk/proxywasm/types"
+  "github.com/tetratelabs/proxy-wasm-go-sdk/proxywasm"
+  "github.com/tetratelabs/proxy-wasm-go-sdk/proxywasm/types"
 )
 
 func main() {
-	proxywasm.SetVMContext(&vmContext{})
+  proxywasm.SetVMContext(&vmContext{})
 }
 
 type vmContext struct {
-	// Embed the default VM context here,
-	// so that we don't need to reimplement all the methods.
-	types.DefaultVMContext
+  // Embed the default VM context here,
+  // so that we don't need to reimplement all the methods.
+  types.DefaultVMContext
 }
 
 // Override types.DefaultVMContext.
 func (*vmContext) NewPluginContext(contextID uint32) types.PluginContext {
-	return &pluginContext{}
+  return &pluginContext{}
 }
 
 type pluginContext struct {
-	// Embed the default plugin context here,
-	// so that we don't need to reimplement all the methods.
-	types.DefaultPluginContext
+  // Embed the default plugin context here,
+  // so that we don't need to reimplement all the methods.
+  types.DefaultPluginContext
 }
 
 // Override types.DefaultPluginContext.
 func (*pluginContext) NewHttpContext(contextID uint32) types.HttpContext {
-	return &httpHeaders{contextID: contextID}
+  return &httpHeaders{contextID: contextID}
 }
 
 type httpHeaders struct {
-	// Embed the default http context here,
-	// so that we don't need to reimplement all the methods.
-	types.DefaultHttpContext
-	contextID uint32
+  // Embed the default http context here,
+  // so that we don't need to reimplement all the methods.
+  types.DefaultHttpContext
+  contextID uint32
 }
 
 func (ctx *httpHeaders) OnHttpRequestHeaders(numHeaders int, endOfStream bool) types.Action {
-	proxywasm.LogInfo("OnHttpRequestHeaders")
-	return types.ActionContinue
+  proxywasm.LogInfo("OnHttpRequestHeaders")
+  return types.ActionContinue
 }
 
 func (ctx *httpHeaders) OnHttpResponseHeaders(numHeaders int, endOfStream bool) types.Action {
-	proxywasm.LogInfo("OnHttpResponseHeaders")
-	return types.ActionContinue
+  proxywasm.LogInfo("OnHttpResponseHeaders")
+  return types.ActionContinue
 }
 
 func (ctx *httpHeaders) OnHttpStreamDone() {
-	proxywasm.LogInfof("%d finished", ctx.contextID)
+  proxywasm.LogInfof("%d finished", ctx.contextID)
 }
 ```
 
@@ -114,9 +114,9 @@ Let's build the filter to check everything is good:
 tinygo build -o main.wasm -scheduler=none -target=wasi main.go
 ```
 
-The build command should run successfully and it should generate a file called `main.wasm`.
+The build command should run successfully, and it should generate a file called `main.wasm`.
 
-To test the extension we've built, we'll use `getenvoy` to run a local Envoy instance.
+We'll use `getenvoy` to run a local Envoy instance to test the extension we've built.
 
 First, we need an Envoy config that will configure the extension:
 
@@ -172,15 +172,15 @@ admin:
 
 Save the above to `envoy.yaml` file.
 
-The Envoy configuration sets up a single listener on port 18000 that returns a direct response (HTTP 200) with body `hello world`. Inside the `http_filters` section we're configuring the `envoy.filters.http.wasm` filter and referencing the local WASM file (`main.wasm`) we've built earlier.
+The Envoy configuration sets up a single listener on port 18000 that returns a direct response (HTTP 200) with body `hello world`. Inside the `http_filters` section, we're configuring the `envoy.filters.http.wasm` filter and referencing the local WASM file (`main.wasm`) we've built earlier.
 
-Let's run the Envoy with this configuration in the background
+Let's run the Envoy with this configuration in the background:
 
 ```sh
 getenvoy run -c envoy.yaml &
 ```
 
-Envoy instance should start without any issues. Once it's started we can make a request to the port Envoy is listening on (`18000`):
+Envoy instance should start without any issues. Once it's started, we can send a request to the port Envoy is listening on (`18000`):
 
 ```sh
 $ curl localhost:18000
@@ -196,18 +196,18 @@ You can stop the proxy by bringing the process to the foreground with `fg` and p
 
 ## Setting additional headers on HTTP response
 
-Let's open the `main.go` file and add an additional header to the response headers. We'll be updating the OnHttpResponseHeaders function to do that.
+Let's open the `main.go` file and add a header to the response headers. We'll be updating the OnHttpResponseHeaders function to do that.
 
 We'll call the `AddHttpResponseHeader` function to add a new header. Update the OnHttpResponseHeaders function to look like this: 
 
 ```go
 func (ctx *httpHeaders) OnHttpResponseHeaders(numHeaders int, endOfStream bool) types.Action {
-	proxywasm.LogInfo("OnHttpResponseHeaders")
-	err := proxywasm.AddHttpResponseHeader("my-new-header", "some-value-here")
-	if err != nil {
-		proxywasm.LogCriticalf("failed to add response header: %v", err)
-	}
-	return types.ActionContinue
+  proxywasm.LogInfo("OnHttpResponseHeaders")
+  err := proxywasm.AddHttpResponseHeader("my-new-header", "some-value-here")
+  if err != nil {
+    proxywasm.LogCriticalf("failed to add response header: %v", err)
+  }
+  return types.ActionContinue
 }
 ```
 
@@ -223,7 +223,7 @@ And we can now re-run the Envoy proxy with the updated extension:
 getenvoy run -c envoy.yaml &
 ```
 
-Now if we send a request again (make sure to add the `-v` flag), we'll see the header that got added on the response:
+Now, if we send a request again (make sure to add the `-v` flag), we'll see the header that got added to the response:
 
 ```sh
 $ curl -v localhost:18000
@@ -289,15 +289,15 @@ Hardcoding values like that in code is never a good idea. Let's see how we can r
   }
   ```
 
-To be able to access the configuration values we've set, we need to add the map to the HTTP context when we initialize it. To do that, we need to update the `httpheaders` struct first:
+To access the configuration values we've set, we need to add the map to the HTTP context when we initialize it. To do that, we need to update the `httpheaders` struct first:
 
 ```go
 type httpHeaders struct {
-	// Embed the default http context here,
-	// so that we don't need to reimplement all the methods.
-	types.DefaultHttpContext
-	contextID         uint32
-	additionalHeaders map[string]string
+  // Embed the default http context here,
+  // so that we don't need to reimplement all the methods.
+  types.DefaultHttpContext
+  contextID         uint32
+  additionalHeaders map[string]string
 }
 ```
 
@@ -305,7 +305,7 @@ Then, in the `NewHttpContext` function we can instantiate the httpHeaders with t
 
 ```go
 func (ctx *pluginContext) NewHttpContext(contextID uint32) types.HttpContext {
-	return &httpHeaders{contextID: contextID, additionalHeaders: ctx.additionalHeaders}
+  return &httpHeaders{contextID: contextID, additionalHeaders: ctx.additionalHeaders}
 }
 ```
 
@@ -313,17 +313,17 @@ Finally, in order to set the headers we modiy the `OnHttpResponseHeaders` functi
 
 ```go
 func (ctx *httpHeaders) OnHttpResponseHeaders(numHeaders int, endOfStream bool) types.Action {
-	proxywasm.LogInfo("OnHttpResponseHeaders")
+  proxywasm.LogInfo("OnHttpResponseHeaders")
 
-	for key, value := range ctx.additionalHeaders {
-		if err := proxywasm.AddHttpResponseHeader(key, value); err != nil {
-				proxywasm.LogCriticalf("failed to add header: %v", err)
-				return types.ActionPause
-		}
-		proxywasm.LogInfof("header set: %s=%s", key, value)
-	}
-		
-	return types.ActionContinue
+  for key, value := range ctx.additionalHeaders {
+    if err := proxywasm.AddHttpResponseHeader(key, value); err != nil {
+        proxywasm.LogCriticalf("failed to add header: %v", err)
+        return types.ActionPause
+    }
+    proxywasm.LogInfof("header set: %s=%s", key, value)
+  }
+    
+  return types.ActionContinue
 }
 ```
 
@@ -355,7 +355,7 @@ Also, let's update the config file to include additional headers in the filter c
             header_2=secondvalue
 ```
 
-With the filter updated we can re-run the proxy again. When you send a request you'll notice the headers we set in the filter configuration are added as response headers:
+With the filter updated, we can re-run the proxy again. When you send a request, you'll notice the headers we set in the filter configuration are added as response headers:
 
 ```sh
 $ curl -v localhost:18000
@@ -378,21 +378,21 @@ First, let's update the `pluginContext` to include the `helloHeaderCounter`:
 
 ```go
 type pluginContext struct {
-	// Embed the default plugin context here,
-	// so that we don't need to reimplement all the methods.
-	types.DefaultPluginContext
-	additionalHeaders  map[string]string
-	contextID          uint32
+  // Embed the default plugin context here,
+  // so that we don't need to reimplement all the methods.
+  types.DefaultPluginContext
+  additionalHeaders  map[string]string
+  contextID          uint32
   // ADD THIS LINE
-	helloHeaderCounter proxywasm.MetricCounter 
+  helloHeaderCounter proxywasm.MetricCounter 
 }
 ```
 
-With the metric counter in the struct, we can now create it in the `NewPluginContext` function. We'll call the header `
+With the metric counter in the struct, we can now create it in the `NewPluginContext` function. We'll call the header `hello_header_counter`.
 
 ```go
 func (*vmContext) NewPluginContext(contextID uint32) types.PluginContext {
-	return &pluginContext{contextID: contextID, additionalHeaders: map[string]string{}, helloHeaderCounter: proxywasm.DefineCounterMetric("hello_header_counter")}
+  return &pluginContext{contextID: contextID, additionalHeaders: map[string]string{}, helloHeaderCounter: proxywasm.DefineCounterMetric("hello_header_counter")}
 }
 ```
 
@@ -400,13 +400,13 @@ Since we want need to check the incoming request headers to decide whether to in
 
 ```go
 type httpHeaders struct {
-	// Embed the default http context here,
-	// so that we don't need to reimplement all the methods.
-	types.DefaultHttpContext
-	contextID          uint32
-	additionalHeaders  map[string]string
+  // Embed the default http context here,
+  // so that we don't need to reimplement all the methods.
+  types.DefaultHttpContext
+  contextID          uint32
+  additionalHeaders  map[string]string
   // ADD THIS LINE
-	helloHeaderCounter proxywasm.MetricCounter
+  helloHeaderCounter proxywasm.MetricCounter
 }
 ```
 
@@ -415,7 +415,7 @@ Also, we need to get the counter from the `pluginContext` and set it when we're 
 ```go
 // Override types.DefaultPluginContext.
 func (ctx *pluginContext) NewHttpContext(contextID uint32) types.HttpContext {
-	return &httpHeaders{contextID: contextID, additionalHeaders: ctx.additionalHeaders, helloHeaderCounter: ctx.helloHeaderCounter}
+  return &httpHeaders{contextID: contextID, additionalHeaders: ctx.additionalHeaders, helloHeaderCounter: ctx.helloHeaderCounter}
 }
 ```
 
@@ -423,21 +423,21 @@ Now that we've piped the `helloHeaderCounter` all the way through to the `httpHe
 
 ```go
 func (ctx *httpHeaders) OnHttpRequestHeaders(numHeaders int, endOfStream bool) types.Action {
-	proxywasm.LogInfo("OnHttpRequestHeaders")
+  proxywasm.LogInfo("OnHttpRequestHeaders")
 
-	_, err := proxywasm.GetHttpRequestHeader("hello")
-	if err != nil {
-		// Ignore if header is not set
-		return types.ActionContinue
-	}
+  _, err := proxywasm.GetHttpRequestHeader("hello")
+  if err != nil {
+    // Ignore if header is not set
+    return types.ActionContinue
+  }
 
-	ctx.helloHeaderCounter.Increment(1)
-	proxywasm.LogInfo("hello_header_counter incremented")
-	return types.ActionContinue
+  ctx.helloHeaderCounter.Increment(1)
+  proxywasm.LogInfo("hello_header_counter incremented")
+  return types.ActionContinue
 }
 ```
 
-Here, we're checking if the "hello" request header is defined (note that we don't care about the header value) and if it's define we call the `Increment` function on the counter instance. Otherwise, if we we get an error from the `GetHttpRequestHeader` we'll just ignore it and return continue.
+Here, we're checking if the "hello" request header is defined (note that we don't care about the header value), and if it's defined, we call the `Increment` function on the counter instance. Otherwise, we'll ignore it and return ActionContinue if we get an error from the `GetHttpRequestHeader` call.
 
 Let's rebuild the extension again:
 
@@ -447,13 +447,13 @@ tinygo build -o main.wasm -scheduler=none -target=wasi main.go
 
 And then re-run the Envoy proxy. Make a couple of requests like this:
 
-```sh
+"`sh
 curl -H "hello: something" localhost:18000
 ```
 
 You'll notice the log Envoy log entry like this one:
 
-```text
+"`text
 wasm log: hello_header_counter incremented
 ```
 
@@ -469,11 +469,11 @@ envoy_hello_header_counter{} 1
 
 The resource we can use to deploy a Wasm module to Istio is called the EnvoyFilter. EnvoyFilter gives us the ability to customize the Envoy configuration. It allows us to modify values, configure new listeners or clusters, and add filters.
 
-In the previous example, there was no need to push or publish the `main.wasm` file anywhere, as it was accessible by the Envoy proxy, because everything was running locally. However, now that we want to run the Wasm module in Envoy proxies that are part of the Istio service mesh, we need a way to make the `main.wasm` file available to all those proxies so they can load and run it.
+In the previous example, there was no need to push or publish the `main.wasm` file anywhere, as it was accessible by the Envoy proxy because everything was running locally. However, now that we want to run the Wasm module in Envoy proxies that are part of the Istio service mesh, we need to make the `main.wasm` file available to all those proxies so they can load and run it.
 
-Since Envoy can be extended using filters, we can use the Envoy HTTP Wasm filter to implement an HTTP filter with a Wasm module. This filter allows us to configure the Wasm module and to load the module file.
+Since Envoy can be extended using filters, we can use the Envoy HTTP Wasm filter to implement an HTTP filter with a Wasm module. This filter allows us to configure the Wasm module and load the module file.
 
-Here's an a snippet that shows how to load a Wasm module using the Envoy HTTP Wasm filter:
+Here's a snippet that shows how to load a Wasm module using the Envoy HTTP Wasm filter:
 
 ```yaml
 name: envoy.filters.http.wasm
@@ -494,7 +494,7 @@ typed_config:
          {}
 ```
 
-This particular snippet is reading the Wasm file from the local path. Note that “local” in this case refers to the container the Envoy proxy is running in.
+This particular snippet is reading the Wasm file from the local path. Note that "local" in this case refers to the container the Envoy proxy is running in.
 
 One way we could bring the Wasm module to that container is to use a persistent volume, for example. We'd then copy the Wasm file to the persistent disk and use the following annotations to mount the volume into the Envoy proxy sidecars:
 
@@ -503,11 +503,11 @@ sidecar.istio.io/userMount: '[{"name": "wasmfilters", "mountPath": "/wasmfilters
 sidecar.istio.io/userVolume: '[{"name": "wasmfilters", "gcePersistentDisk": { "pdName": "my-data-disk", "fsType": "ext4" }}]'
 ```
 
-Note that the above snippet assumes a persistent disk running in GCP. This could be any other persistent volume as well. We'd then have to patch the existing Kubernetes deployments and 'inject' the above annotations.
+Note that the above snippet assumes a persistent disk running in GCP. The disk could be any other persistent volume as well. We'd then have to patch the existing Kubernetes deployments and 'inject' the above annotations.
 
-Luckily for us there is another option. Remember the local field from the Envoy HTTP Wasm filter configuration? Well, there's also a remote field we can use to load the Wasm module from a remote location, a URL. This simplifies things a lot! We can upload the .wasm file to remote storage, get the public URL to the module, and then use it.
+Luckily for us, there is another option. Remember the local field from the Envoy HTTP Wasm filter configuration? Well, there's also a remote field we can use to load the Wasm module from a remote location, a URL. The remote field simplifies things a lot! We can upload the .wasm file to remote storage, get the public URL to the module, and then use it.
 
-In this example we'll upload the module to a GCP storage account and made the file publicly accessible.
+In this example, we'll upload the module to a GCP storage account and made the file publicly accessible.
 
 The updated configuration would now look like this:
 
@@ -521,7 +521,7 @@ vm_config:
         sha256: "[sha]"
 ```
 
-If you’re using Istio 1.9 or newer, you don’t have to provide the sha256 checksum, as Istio will fill that automatically. However, if you’re using Istio 1.8 or older, the sha256 checksum is required and it prevents the Wasm module from being downloaded each time. You can get the SHA by running sha256sum command.
+You can get the SHA by running sha256sum command. If you're using Istio 1.9 or newer, you don't have to provide the sha256 checksum, as Istio will fill that automatically. However, if you're using Istio 1.8 or older, the sha256 checksum is required, and it prevents the Wasm module from being downloaded each time.
 
 Let's create a new storage bucket first (use your name/alias instead of the `wasm-bucket` value), using the `gsutil` command (the command is available in the GCP cloud shell): 
 
@@ -542,7 +542,7 @@ gsutil cp main.wasm gs://$BUCKET_NAME
 gsutil acl ch -u AllUsers:R gs://$BUCKET_NAME/main.wasm
 ```
 
-The URL where the uploaded file is available is: `http://BUCKET_NAME.storage.googleapis.com/OBJECT_NAME`. For example `http://wasm-bucket.storage.googleapis.com/main.wasm`.
+The URL where the uploaded file is available is: `http://BUCKET_NAME.storage.googleapis.com/OBJECT_NAME`. For example, `http://wasm-bucket.storage.googleapis.com/main.wasm`.
 
 We can now create the EnvoyFilter resource that tells Envoy where to download the extension as well as where to inject it (make sure you update the `uri` field with your bucket URI):
 
@@ -593,7 +593,7 @@ spec:
           type_urls: [ "type.googleapis.com/envoy.extensions.filters.http.wasm.v3.Wasm"]
 ```
 
-Note that we’re deploying the EnvoyFilters to default namespace. We could also deploy them to a root namespace (e.g. `istio-system`) in case we wanted to apply the filter to all workloads in the mesh. Additionally, we could specify the selectors to pick the workloads to which we want to apply the filter.
+Note that we're deploying the EnvoyFilters to the default namespace. We could also deploy them to a root namespace (e.g. `istio-system`) if we wanted to apply the filter to all workloads in the mesh. Additionally, we could specify the selectors to pick the workloads to which we want to apply the filter.
 
 Save the above YAML to `envoyfilter.yaml` file and create it:
 
@@ -666,7 +666,7 @@ To see if something went wrong with downloading the Wasm module, you can look at
 
 Let's try out the deployed Wasm module! 
 
-We will create a single Pod inside the cluster and from there we will send a request to `http://httpbin:8000/get`
+We will create a single Pod inside the cluster, and from there, we will send a request to `http://httpbin:8000/get`
 
 ```sh
 $ kubectl run curl --image=curlimages/curl -it --rm -- /bin/sh
