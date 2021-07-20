@@ -119,7 +119,7 @@ deployment.apps/prometheus created
 Once the Prometheus pod starts, we can use the `dashboard` command to open the Prometheus Dashboard:
 
 ```sh
-$ getistio istioctl dashboard prometheus
+$ getmesh istioctl dashboard prometheus
 http://localhost:9090
 ```
 
@@ -162,7 +162,7 @@ configmap/istio-services-grafana-dashboards created
 Kubernetes deploys Grafana in the `istio-system` namespace. To access Grafana, we can use the `dashboard` command:
 
 ```bash
-$ getistio istioctl dashboard grafana
+$ getmesh istioctl dashboard grafana
 http://localhost:3000
 ```
 
@@ -245,7 +245,7 @@ service/tracing created
 service/zipkin created
 ```
 
-We can open the Zipkin dashboard by running `getistio istioctl dashboard zipkin`. From the UI we can select the criteria for the trace lookups. Before we do that, make sure you make a couple of requests to the Nginx server so there are some traces we can look at.
+We can open the Zipkin dashboard by running `getmesh istioctl dashboard zipkin`. From the UI we can select the criteria for the trace lookups. Before we do that, make sure you make a couple of requests to the Nginx server so there are some traces we can look at.
 
 Click the button and select `serviceName` and then `my-nginx.default` service from the dropdown and click the search button (or press Enter) to search the traces.
 
@@ -280,7 +280,7 @@ deployment.apps/kiali created
 
 Note that if you see any errors such as `no matches for kind "MonitoringDashboard" in version "monitoringkiali.io/v1alpha"`, re-run the above `kubectl apply` command again. The issue is that there might be a race condition when installing the CRD (custom resource definition) and resources that are defined by that CRD.
 
-We can open Kiali using `getistio istioctl dashboard kiali` and use the web preview to open it.
+We can open Kiali using `getmesh istioctl dashboard kiali` and use the web preview to open it.
 
 Kiali can generate a service graph like the one in the figure below. 
 

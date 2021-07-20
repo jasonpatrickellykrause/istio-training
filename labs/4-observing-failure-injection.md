@@ -198,7 +198,7 @@ while true; do curl http://$GATEWAY_URL/; done
 We should start noticing some of the requests taking longer than usual. Let's open Grafana and observe these delays.
 
 ```bash
-$ getistio istioctl dash grafana
+$ getmesh istioctl dash grafana
 ```
 
 When Grafana opens, click **Home** and the **Istio Service Dashboard**. On the dashboard, make sure to select the `web-frontend.default.svc.cluster.local` in the Service dropdown.
@@ -209,7 +209,7 @@ Expand the **Service Workloads** section and you will notice the increased durat
 
 You can notice the same delay being reported on the `web-frontend.default.svc.cluster.local` service side.
 
-Let's see how this delay shows up in Zipkin. Open Zipkin with `getistio istioctl dash zipkin`. On the main screen, select the `serviceName` and `web-frontend.default`, then add the `minDuration` criteria and enter `5s` and click the search button to find traces.
+Let's see how this delay shows up in Zipkin. Open Zipkin with `getmesh istioctl dash zipkin`. On the main screen, select the `serviceName` and `web-frontend.default`, then add the `minDuration` criteria and enter `5s` and click the search button to find traces.
 
 Click on one of the traces to open the details page. On the details page, we will notice the duration is 5 seconds. We will also see the `response_flags` tag set to `DI`. "DI" indicates that the request was delayed.
 
@@ -260,7 +260,7 @@ There's a similar story in Zipkin. If we search for traces again (we can remove 
 
 If you click on the trace you will notice the `response_flags` are set to FI, which stands for Failure Injection.
 
-Let's also open Kiali (`getistio istioctl dash kiali`) and look at the service graph by clicking the Graph link from the sidebar. You will notice how the `web-frontend` service has a red border, as shown below.
+Let's also open Kiali (`getmesh istioctl dash kiali`) and look at the service graph by clicking the Graph link from the sidebar. You will notice how the `web-frontend` service has a red border, as shown below.
 
 ![Kiali error graph](./img/4-kiali-error-graph.png)
 
