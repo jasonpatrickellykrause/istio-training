@@ -1,22 +1,22 @@
 # Wasm Extensions
 
-We will be using [TinyGo](https://tinygo.org), [proxy-wasm-go-sdk](https://github.com/tetratelabs/proxy-wasm-go-sdk) and [GetEnvoy CLI](https://getenvoy.io) to build and test an Envoy Wasm extension. Then we'll show a way to configure the Wasm module using the EnvoyFilter resource and deploy it to Envoy sidecars in a Kubernetes cluster.
+We will be using [TinyGo](https://tinygo.org), [proxy-wasm-go-sdk](https://github.com/tetratelabs/proxy-wasm-go-sdk) and [func-e CLI](https://func-e.io) to build and test an Envoy Wasm extension. Then we'll show a way to configure the Wasm module using the EnvoyFilter resource and deploy it to Envoy sidecars in a Kubernetes cluster.
 
 We'll start with something trivial for our first example and write a simple Wasm module using TinyGo that adds a custom header to response headers.
 
-## Installing GetEnvoy CLI
+## Installing func-e CLI
 
-Let's get started by downloading GetEnvoy CLI and installing it to `/usr/local/bin`:
+Let's get started by downloading func-e CLI and installing it to `/usr/local/bin`:
 
 ```sh
-curl -L https://getenvoy.io/cli | sudo bash -s -- -b /usr/local/bin
+curl https://func-e.io/install.sh | bash -s -- -b /usr/local/bin
 ```
 
 Once downloaded, let's run it to make sure all is good:
 
 ```sh
-$ getenvoy --version
-getenvoy version 0.4.1
+$ func-e --version
+func-e version 0.5.0
 ```
 
 ## Installing TinyGo
@@ -116,7 +116,7 @@ tinygo build -o main.wasm -scheduler=none -target=wasi main.go
 
 The build command should run successfully, and it should generate a file called `main.wasm`.
 
-We'll use `getenvoy` to run a local Envoy instance to test the extension we've built.
+We'll use `func-e` to run a local Envoy instance to test the extension we've built.
 
 First, we need an Envoy config that will configure the extension:
 
@@ -177,7 +177,7 @@ The Envoy configuration sets up a single listener on port 18000 that returns a d
 Let's run the Envoy with this configuration in the background:
 
 ```sh
-getenvoy run -c envoy.yaml &
+func-e run -c envoy.yaml &
 ```
 
 Envoy instance should start without any issues. Once it's started, we can send a request to the port Envoy is listening on (`18000`):
@@ -220,7 +220,7 @@ tinygo build -o main.wasm -scheduler=none -target=wasi main.go
 And we can now re-run the Envoy proxy with the updated extension:
 
 ```
-getenvoy run -c envoy.yaml &
+func-e run -c envoy.yaml &
 ```
 
 Now, if we send a request again (make sure to add the `-v` flag), we'll see the header that got added to the response:

@@ -399,7 +399,6 @@ istioctl pc log deployment/web-frontend -r
 
 The commands under the experimental section are under active development and are not ready for production use - i.e., they might change or be removed.
 
-
 ### authz check
 
 To show how the authz check command looks like, let's deploy a sample AuthorizationPolicy.
@@ -579,7 +578,6 @@ The above command will generate the following files in the `/some/folder`:
 - `istio-token`: Kubernetes token used to get certs from the CA
 - `mesh.yaml`: contains the configuration for the proxy, as well as the istiod discovery address
 - `root-cert.pem`: root certificate used for authentication
-
 
 ## Cleanup
 
