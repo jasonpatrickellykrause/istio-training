@@ -267,7 +267,7 @@ Hardcoding values like that in code is never a good idea. Let's see how we can r
   ```go
   func (ctx *pluginContext) OnPluginStart(pluginConfigurationSize int) types.OnPluginStartStatus {
     // Get the plugin configuration
-    config, err := proxywasm.GetPluginConfiguration(pluginConfigurationSize)
+    config, err := proxywasm.GetPluginConfiguration()
     if err != nil && err != types.ErrorStatusNotFound {
       proxywasm.LogCriticalf("failed to load config: %v", err)
       return types.OnPluginStartStatusFailed
