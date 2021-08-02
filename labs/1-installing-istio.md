@@ -295,7 +295,7 @@ spec:
 
 Save the above to `demo-installation.yaml` and create the resource with `kubectl apply -f demo-installation.yaml`.
 
-We can check the status of the installation by listing the Istio operator resource. The installation is completed once the STATUS column shows HEALTY:
+We can check the status of the installation by listing the Istio operator resource. The installation is completed once the STATUS column shows HEALTHY:
 
 ```sh
 $ kubectl get iop -A
