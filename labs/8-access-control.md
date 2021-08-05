@@ -248,7 +248,7 @@ spec:
   - from:
     - source:
         namespaces: ["default"]
-      source:
+    - source:
         principals: ["web-frontend"]
 ```
 
