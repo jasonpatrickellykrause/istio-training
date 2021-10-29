@@ -27,7 +27,7 @@ If we try to access the ingress gateways' external IP address, we will get back 
 
 Let's look at the Envoy config and see the config that gets created:
 
-```
+```shell
 $ istioctl pc routes [ingress-gateway-pod]
 
 NAME        DOMAINS     MATCH                  VIRTUAL SERVICE
@@ -35,19 +35,20 @@ http.80     *           /*                     404
             *           /healthz/ready*
             *           /stats/prometheus*
 ```
+
 Note that regardless what the hosts are set to in the gateway, because we don't have any virtual services attached it will show a 404.
 
 We can also use port-forward to look at the configuration of the proxy:
 
-```
+```shell
 kubectl port-forward  pod/[ingress-gateway-pod] -n istio-system 15000:15000
 ```
 
-If we scroll to the bottom you'll see the blackhole virtual host without any routes defined.
+If we scroll to the bottom you'll see the black hole virtual host without any routes defined.
 
 To get the ingress gateways external IP address, run the command below and look at the `EXTERNAL-IP` column value:
 
-```bash
+```shell
 $ kubectl get svc -l=istio=ingressgateway -n istio-system
 NAME                   TYPE           CLUSTER-IP   EXTERNAL-IP      PORT(S)                                                                      AGE
 istio-ingressgateway   LoadBalancer   10.0.98.7    50.130.100.200   15021:31395/TCP,80:32542/TCP,443:31347/TCP,31400:32663/TCP,15443:31525/TCP   9h
@@ -104,7 +105,7 @@ spec:
 
 Save the above YAML to `hello-world.yaml` and create the deployment and service using `kubectl apply -f hello-world.yaml`. If we look at the created Pods, we will notice two containers running. One is the Envoy sidecar proxy, and the second one is the application. We have also created a Kubernetes service called `hello-world`:
 
-```bash
+```shell
 $ kubectl get po,svc -l=app=hello-world
 NAME                               READY   STATUS    RESTARTS   AGE
 pod/hello-world-6bf9d9bdb6-r8bb4   2/2     Running   0          78s
@@ -137,7 +138,7 @@ We are matching the value of the `hosts` field with the hosts defined in the Gat
 
 Save the above YAML to `vs-hello-world.yaml` and create the VirtualService using `kubectl apply -f vs-hello-world.yaml`. If you look at the deployed VirtualService, you should see a similar output:
 
-```bash
+```shell
 $ kubectl get vs
 NAME          GATEWAYS    HOSTS   AGE
 hello-world   [gateway]   [*]     3m31s
@@ -145,7 +146,7 @@ hello-world   [gateway]   [*]     3m31s
 
 Let's check the Envoy routes again.
 
-```
+```shell
 $ istioctl pc routes [ingress-gateway-pod]
 NAME        DOMAINS       MATCH                  VIRTUAL SERVICE
 http.80     hello.com     /*                     hello-world.default
@@ -157,13 +158,13 @@ This time you'll notice the domain is set to hello.com and a virtual service map
 
 If we look at the Envoy config, we'll see that the actual route is defined:
 
-```
+```shell
 kubectl port-forward pod/[ingress-gateway-pod] -n istio-system 15000:15000
 ```
 
 If we run cURL against `GATEWAY_URL` or open it in the browser, we will get back a response of `Hello World`:
 
-```bash
+```shell
 $ curl -v -H "Host: hello.com" http://$GATEWAY_URL/
 *   Trying GATEWAY_URL...
 * TCP_NODELAY set
@@ -190,7 +191,7 @@ Also, notice the `server` header set to `istio-envoy` telling us that the reques
 
 Delete the Deployment, Service, VirtualService, and the Gateway:
 
-```bash
+```shell
 kubectl delete deploy hello-world
 kubectl delete service hello-world
 kubectl delete vs hello-world

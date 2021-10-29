@@ -198,7 +198,7 @@ We can use the proxy config command to retrieve the different sections of the pr
 
 Let's look at the listeners first:
 
-```
+```shell
 $ istioctl proxy-config listener deployment/web-frontend
 ADDRESS PORT MATCH DESTINATION
 ...
@@ -206,15 +206,15 @@ ADDRESS PORT MATCH DESTINATION
 
 For the majority of commands, you can also use the `-o json` flag to get the same output in the JSON format, which is helpful if you want to look at all the details:
 
-```
+```shell
 istioctl proxy-config listener deployment/web-frontend -o json
 ```
 
 As the name suggests, the listener command shows all configured listeners for the specific pod, with the addresses, port numbers, matches, and destinations.
 
-You can also filter the list down by the address field, port or type. For example, to see all listeners listening on port `80`, add the `--port` flag to the command: 
+You can also filter the list down by the address field, port or type. For example, to see all listeners listening on port `80`, add the `--port` flag to the command:
 
-```
+```shell
 $ istioctl proxy-config listener deployment/web-frontend --port 80
 
 ADDRESS PORT MATCH                        DESTINATION
@@ -228,13 +228,13 @@ The `json` flag works as well in combination with the port filter, for example. 
 
 The next sub-command is routes that list all routes in the configuration:
 
-```
+```shell
 istioctl proxy-config routes deployment/web-frontend
 ```
 
 It also supports filtering the routes based on the name. From the listeners command, we know the route is called "80", so we can now list all routes with that name using the `--name` flag:
 
-```
+```shell
 $ istioctl proxy-config routes deployment/web-frontend --name 80
 NAME     DOMAINS                               MATCH     VIRTUAL SERVICE
 80       customers                             /*        customers.default
@@ -244,7 +244,7 @@ NAME     DOMAINS                               MATCH     VIRTUAL SERVICE
 80       web-frontend                          /*
 ```
 
-We can see the domain `customers`, the match, and the virtual service that configures the routing rules from the output. The virtual service name is read from the metadata that Istio sets in one of its filters: 
+We can see the domain `customers`, the match, and the virtual service that configures the routing rules from the output. The virtual service name is read from the metadata that Istio sets in one of its filters:
 
 ```json
 "metadata": {
@@ -260,7 +260,7 @@ We can see the domain `customers`, the match, and the virtual service that confi
 
 The next sub-command are clusters that show information about the cluster configuration for the Envoy instance in the pod:
 
-```
+```shell
 istioctl pc clusters deployment/web-frontend
 ```
 
@@ -268,13 +268,13 @@ The clusters options support more flags to filter the list down. You can pretty 
 
 For example, the `direction` to show all outbound clusters:
 
-```
+```shell
 istioctl pc clusters deployment/web-frontend --direction outbound
 ```
 
 You'll notice the subsets and the destination rules that were created for specific services will show up as well. For example:
 
-```
+```shell
 $ istioctl pc clusters deployment/web-frontend --direction outbound
 
 SERVICE FQDN                                            PORT      SUBSET     DIRECTION     TYPE     DESTINATION RULE
@@ -290,7 +290,7 @@ Finally, with the endpoints, you can get the list of all endpoints.
 
 For example:
 
-```
+```shell
 $ istioctl pc endpoints deployment/web-frontend
 ENDPOINT                         STATUS      OUTLIER CHECK     CLUSTER
 10.92.1.6:3000                   HEALTHY     OK                outbound|80|v1|customers.default.svc.cluster.local
@@ -301,7 +301,7 @@ ENDPOINT                         STATUS      OUTLIER CHECK     CLUSTER
 ...
 ```
 
-The output also shows the status of each endpoint, the outlier check (in case endpoint is ejected or not) and the cluster name that the endpoint belongs to. 
+The output also shows the status of each endpoint, the outlier check (in case endpoint is ejected or not) and the cluster name that the endpoint belongs to.
 
 The output can also be filtered by the cluster name or the endpoint address.
 
@@ -309,7 +309,7 @@ The output can also be filtered by the cluster name or the endpoint address.
 
 The secrets command is still under development, but it will show you the information about the secret configuration and certs in the proxy:
 
-```
+```shell
 $ istioctl pc secrets deployment/web-frontend
 RESOURCE NAME     TYPE           STATUS     VALID CERT     SERIAL NUMBER                               NOT AFTER                NOT BEFORE
 default           Cert Chain     ACTIVE     true           99793030141783437847211966546730179209      2021-06-28T21:37:17Z     2021-06-27T21:37:17Z
@@ -324,7 +324,7 @@ Also, let's look at the log command. This command allows you to see and update l
 
 For example, to list all loggers, run:
 
-```
+```shell
 $ istioctl pc log deployment/web-frontend
 active loggers:
   admin: warning
@@ -337,7 +337,7 @@ active loggers:
 
 Here's the full list of available logging scopes/loggers:
 
-```
+```plaintext
 admin
 aws
 assert
@@ -426,7 +426,7 @@ Save the above YAML to `auth.yaml` and create it using `kubectl apply -f auth.ya
 
 The authz check command shows the authorization policies applied to the pods:
 
-```
+```shell
 $ istioctl x authz check deployment/web-frontend
 ACTION   AuthorizationPolicy              RULES
 ALLOW    allow-ingress-frontend.default   1
@@ -434,7 +434,7 @@ ALLOW    allow-ingress-frontend.default   1
 
 ### add-to-mesh/remove-from-mesh
 
-You can use the add-to-mesh command to inject sidecar containers to already running deployments/pods. 
+You can use the add-to-mesh command to inject sidecar containers to already running deployments/pods.
 
 Let's start by creating a new namespace without Istio injection enabled:
 
@@ -489,6 +489,7 @@ spec:
         ports:
         - containerPort: 80
 ```
+
 Save the above YAML to `httpbin.yaml` and deploy it to the `no-injection` namespace using `kubectl apply -f httpbin.yaml -n no-injection`.
 
 We can now use the `add-to-mesh` command to inject the proxy into the deployment:
@@ -523,7 +524,7 @@ The `describe` command describes the services/pods and their corresponding Istio
 
 For example:
 
-```
+```shell
 $ istioctl x describe service web-frontend
 Service: web-frontend
    Port: http 80/HTTP targets pod port 8080
@@ -565,9 +566,10 @@ spec:
     ports: {}
     serviceAccount: default
 ```
-Once we've created the workload group, we can use the `workload entry configure` command to create all required configuration files for a workload instance that'll be running on a VM. 
 
-```
+Once we've created the workload group, we can use the `workload entry configure` command to create all required configuration files for a workload instance that'll be running on a VM.
+
+```shell
 istioctl x workload entry configure -f my-workloadgroup.yaml -o /some/folder
 ```
 

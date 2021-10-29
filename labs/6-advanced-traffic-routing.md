@@ -1,6 +1,6 @@
 # Advanced Traffic routing
 
-In this lab, we will learn how to use request properties to route the traffic between multiple service versions. 
+In this lab, we will learn how to use request properties to route the traffic between multiple service versions.
 
 We will start by deploying the Gateway:
 
@@ -232,7 +232,7 @@ If we open the `GATEWAY_URL` we should still get back the response from the Cust
 
 We can use the [ModHeader](https://chrome.google.com/webstore/detail/modheader/idgpnmonknjnojddfkpgkljpfnnfcklj?hl=en) extension to modify the headers from the browser. Alternatively, we can use cURL and add the header to the request like this:
 
-```bash
+```shell
 $ curl -H "user: debug" http://GATEWAY_URL/
 ...
 <th class="px-4 py-2">CITY</th>
@@ -242,11 +242,11 @@ $ curl -H "user: debug" http://GATEWAY_URL/
 
 If we look through the response, you will notice the two columns - CITY and NAME.
 
-## Cleanup 
+## Cleanup
 
 Delete the Deployments, Services, VirtualServices, DestinationRule, and the Gateway:
 
-```bash
+```shell
 kubectl delete deploy web-frontend customers-{v1,v2}
 kubectl delete svc customers web-frontend
 kubectl delete vs customers web-frontend

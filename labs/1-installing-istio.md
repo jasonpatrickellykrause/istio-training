@@ -17,13 +17,13 @@ When using a local Kubernetes cluster, make sure your computer meets the minimum
 
 The section that follow explain how to use Minikube or Kubernetes cluster on Google Cloud Platform.
 
-## Using Minikube 
+## Using Minikube
 
-You can use Minikube with a Hypervisor. Hypervisor choice will depend on your operating system. To install Minikube and the Hypervisor, you can follow the [installation instructions](https://kubernetes.io/docs/tasks/tools/install-minikube/). 
+You can use Minikube with a Hypervisor. Hypervisor choice will depend on your operating system. To install Minikube and the Hypervisor, you can follow the [installation instructions](https://kubernetes.io/docs/tasks/tools/install-minikube/).
 
 Once we have installed Minikube, we can create and launch the Kubernetes cluster. The below command starts a Minikube cluster using VirtualBox hypervisor.
 
-```bash
+```shell
 minikube start --memory=16384 --cpus=4 --driver=virtualbox
 ```
 
@@ -32,17 +32,17 @@ Make sure to replace the `--driver=virtualbox` with the name of the Hypervisor y
 | Flag name | More information |
 | --- | --- |
 | `hyperkit` | [HyperKit](https://github.com/moby/hyperkit) |
-| `hyperv` | [Hyper-V](https://docs.microsoft.com/en-us/virtualization/hyper-v-on-windows/) | 
+| `hyperv` | [Hyper-V](https://docs.microsoft.com/en-us/virtualization/hyper-v-on-windows/) |
 | `kvm2` | [KVM](https://www.linux-kvm.org/page/Main_Page) |
 |`docker` | [Docker](https://hub.docker.com/search?q=&type=edition&offering=community&sort=updated_at&order=desc) |
 | `podman` | [Podman](https://podman.io/getting-started/installation.html)
 | `parallels` | [Parallels](https://www.parallels.com/) |
-| `virtualbox` | [VirtualBox](https://www.virtualbox.org/) | 
-| `vmware` | [VMware Fusion](https://www.vmware.com/products/fusion.html) | 
+| `virtualbox` | [VirtualBox](https://www.virtualbox.org/) |
+| `vmware` | [VMware Fusion](https://www.vmware.com/products/fusion.html) |
 
 To check if the cluster is running, we can use the Kubernetes CLI and run the `kubectl get nodes` command:
 
-```bash
+```shell
 $ kubectl get nodes
 NAME       STATUS   ROLES    AGE    VERSION
 minikube   Ready    master   151m   v1.19.0
@@ -56,7 +56,7 @@ If you need to install the Kubernetes CLI, follow [these instructions](https://k
 
 We can run `kubectl version` to check if the CLI is installed. You should see the output similar to this one:
 
-```bash
+```shell
 $ kubectl version
 Client Version: version.Info{Major:"1", Minor:"19", GitVersion:"v1.19.2", GitCommit:"f5743093fd1c663cb0cbc89748f730662345d44d", GitTreeState:"clean", BuildDate:"2020-09-16T21:51:49Z", GoVersion:"go1.15.2", Compiler:"gc", Platform:"darwin/amd64"}
 Server Version: version.Info{Major:"1", Minor:"19", GitVersion:"v1.19.0", GitCommit:"e19964183377d0ec2052d1f1fa930c4d7575bd50", GitTreeState:"clean", BuildDate:"2020-08-26T14:23:04Z", GoVersion:"go1.15", Compiler:"gc", Platform:"linux/amd64"}
@@ -170,7 +170,7 @@ data plane version: 1.9.5-tetrate-v0 (2 proxies)
 
 To check the status of the installation, we can look at the status of the Pods in the `istio-system` namespace:
 
-```bash
+```shell
 $ kubectl get po -n istio-system
 NAME                                    READY   STATUS    RESTARTS   AGE
 istio-egressgateway-6db9994577-sn95p    1/1     Running   0          79s
@@ -180,24 +180,24 @@ istiod-dd4b7db5-nxrjv                   1/1     Running   0          111s
 
 The operator has finished installing Istio when all Pods are running.
 
-## Enable sidecar injection 
+## Enable sidecar injection
 
 As we've learned in the previous section, service mesh needs the sidecar proxies running alongside each application.
 
 To inject the sidecar proxy into an existing Kubernetes deployment, we can use `kube-inject` action in the `istioctl` command.
 
-However, we can also enable automatic sidecar injection on any Kubernetes namespace. If we label the namespace with `istio-injection=enabled`, Istio automatically injects the sidecars for any Kubernetes Pods we create in that namespace. 
+However, we can also enable automatic sidecar injection on any Kubernetes namespace. If we label the namespace with `istio-injection=enabled`, Istio automatically injects the sidecars for any Kubernetes Pods we create in that namespace.
 
 Let's enable automatic sidecar injection on the `default` namespace by adding a label:
 
-```bash
+```shell
 $ kubectl label namespace default istio-injection=enabled
 namespace/default labeled
 ```
 
 To check the namespace is labeled, run the command below. The `default` namespace should be the only one with the value `enabled`.
 
-```bash
+```shell
 $ kubectl get namespace -L istio-injection
 NAME              STATUS   AGE   ISTIO-INJECTION
 default           Active   32m   enabled
@@ -210,22 +210,22 @@ kube-system       Active   32m
 
 We can now try creating a Deployment in the `default` namespace and observe the injected proxy. We will create a deployment called `my-nginx` with a single container using image `nginx`:
 
-```
+```shell
 $ kubectl create deploy my-nginx --image=nginx
 deployment.apps/my-nginx created
 ```
 
 If we look at the Pods, you will notice there are two containers in the Pod:
 
-```
+```shell
 $ kubectl get po
 NAME                        READY   STATUS    RESTARTS   AGE
 my-nginx-6b74b79f57-hmvj8   2/2     Running   0          62s
-``` 
+```
 
 Similarly, describing the Pod shows Kubernetes created both an `nginx` container and an `istio-proxy` container:
 
-```
+```shell
 $ kubectl describe po my-nginx-6b74b79f57-hmvj8
 ...
 Events:
@@ -248,7 +248,7 @@ Events:
 
 To remove the deployment, run the delete command:
 
-```bash
+```shell
 $ kubectl delete deployment my-nginx
 deployment.apps "my-nginx" deleted
 ```
@@ -349,7 +349,7 @@ spec:
             networking.gke.io/load-balancer-type: "Internal"
 ```
 
-## Cleanup 
+## Cleanup
 
 Note that you'll be using the same cluster throughout the workshop, so you don't have to delete Istio. However, if you want to try it out, you can always delete and re-install it again.
 

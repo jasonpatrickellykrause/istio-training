@@ -33,17 +33,17 @@ Once GetMesh downloads the specific Istio version, it will automatically switch 
 $ getmesh istioctl version
 no running Istio pods in "istio-system"
 1.8.3-tetrate-v0
-``` 
+```
 
 Make sure the Istio CLI version you're using is 1.8.3.
 
 Let's install Istio 1.8.3 now:
 
 ```sh
-$ getmesh istioctl install --set profile=demo --set revision=1-8-3
+getmesh istioctl install --set profile=demo --set revision=1-8-3
 ```
 
-Note that currently, there is a bug in creating the ValidatingWebhookConfiguration if we use the revision label for the initial mesh installation.  For Istio resource validation to work, we need to update the `istiod` service to point to the control plane revision that should handle the validation. Because we used the revision, a service called `istiod-1-8-3` was created - the service should have been called `istiod`. 
+Note that currently, there is a bug in creating the ValidatingWebhookConfiguration if we use the revision label for the initial mesh installation.  For Istio resource validation to work, we need to update the `istiod` service to point to the control plane revision that should handle the validation. Because we used the revision, a service called `istiod-1-8-3` was created - the service should have been called `istiod`.
 
 Let's create this service as a workaround - the actual fix for this issue will be available in Istio 1.10:
 
@@ -57,7 +57,7 @@ We'll deploy a sample application, but before we do that, let's label the `defau
 kubectl label ns default istio.io/rev=1-8-3
 ```
 
-We have labeled the `default` namespace with the `istio.io/rev` label because we used a revision label during the installation. 
+We have labeled the `default` namespace with the `istio.io/rev` label because we used a revision label during the installation.
 
 With Istio installed and namespace labeled, let's deploy a sample application - the web frontend and customer service.
 
@@ -84,13 +84,13 @@ We will now install Istio 1.9.5 with a similar command we used before. However, 
 Let's switch the Istio CLI to the latest version using the following command:
 
 ```sh
-$ getmesh fetch --version 1.9.5
+getmesh fetch --version 1.9.5
 ```
 
 Next, we can install Istio 1.9.5 and set the revision flag to 1-9-5:
 
 ```sh
-$ getmesh istioctl install --set profile=demo --set revision=1-9-5
+getmesh istioctl install --set profile=demo --set revision=1-9-5
 ```
 
 This will create a new control plane (`istiod-1-9-5`), service (`istiod-1-9-5`) and a new sidecar injector. You can see the new control plane components by running the following command:
@@ -132,7 +132,7 @@ $ getmesh istioctl proxy-status | grep $(kubectl -n istio-system get pod -l app=
 1.9.5-tetrate-v0
 ```
 
-## Upgrade the control plane 
+## Upgrade the control plane
 
 The first thing we will switch over to the new version is the ValidatingWebhookConfiguration. At the moment, this points to the existing (old) istiod version (specifically, it points to the `istiod` service we created). We need to update the labels on the `istiod` service to point to revision 1-9-5.
 
@@ -162,7 +162,7 @@ Let's do that now and overwrite the existing label:
 kubectl label ns default istio.io/rev=1-9-5 --overwrite
 ```
 
-If we created another deployment in the default namespace, the proxies in the new pods would point to the new control plane. 
+If we created another deployment in the default namespace, the proxies in the new pods would point to the new control plane.
 
 If we want to update the existing deployments, we can restart the Pods to trigger the re-injection and have the new proxies be injected. We can use the rollout and restart command to restart all deployments:
 
@@ -172,7 +172,7 @@ kubectl rollout restart deployment
 
 Once the Pods come back up, the proxies will be configured to talk to `istiod-1-9-5` control plane. We can run the proxy status command to check the proxy versions:
 
-```
+```shell
 $ getmesh istioctl proxy-status | grep $(kubectl get pod -l app=web-frontend -o jsonpath='{.items..metadata.name}') | awk '{print $7}'
 1.9.5-tetrate-v0
 ```

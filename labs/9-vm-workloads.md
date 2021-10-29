@@ -8,13 +8,13 @@ After we've created a Kubernetes cluster, we can download, install Istio, and co
 
 Let's download Istio 1.9.5:
 
-```bash
-$ curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.9.5 sh -
+```shell
+curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.9.5 sh -
 ```
 
 With Istio downloaded, we can install it using the default profile with automatic WorkloadEntry creation:
 
-```bash
+```shell
 istioctl install --set values.pilot.env.PILOT_ENABLE_WORKLOAD_ENTRY_AUTOREGISTRATION=true
 ```
 
@@ -22,13 +22,13 @@ Next, we will deploy a separate gateway that we will use to expose the Istio's c
 
 Go to the folder where you downloaded Istio (e.g. `istio-1.9.5`) and run this script:
 
-```bash
+```shell
 samples/multicluster/gen-eastwest-gateway.sh --single-cluster | istioctl install -y -f -
 ```
 
 You can list the Pods in the `istio-system` namespaces to check the gateway that was installed:
 
-```bash
+```shell
 $ kubectl get po -n istio-system
 NAME                                     READY   STATUS    RESTARTS   AGE
 istio-eastwestgateway-59cc6fcdb6-b64rs   1/1     Running   0          34s
@@ -36,11 +36,11 @@ istio-ingressgateway-69b7dd67d6-5pj6b    1/1     Running   0          7m58s
 istiod-58596b9585-rq8f5                  1/1     Running   0          8m11s
 ```
 
-For virtual machines to access the Istio's control plane, we need to create a Gateway resource to configure the `istio-eastwestgateway`, and a VirtualService that has the Gateway attached. 
+For virtual machines to access the Istio's control plane, we need to create a Gateway resource to configure the `istio-eastwestgateway`, and a VirtualService that has the Gateway attached.
 
 We can use another script from the Istio package to create these resources and expose the control plane:
 
-```
+```shell
 $ kubectl apply -f samples/multicluster/expose-istiod.yaml
 gateway.networking.istio.io/istiod-gateway created
 virtualservice.networking.istio.io/istiod-vs created
@@ -52,14 +52,14 @@ For the virtual machine workloads, we have to create a separate namespace to sto
 
 Let's create a separate folder called `vm-files` to store these files. We can also save the full path to the folder in the `WORK_DIR` environment variable:
 
-```
-$ mkdir -p vm-files
-$ export WORK_DIR="$PWD/vm-files"
+```shell
+mkdir -p vm-files
+export WORK_DIR="$PWD/vm-files"
 ```
 
 We also set a couple of environment variables before continuing, so we don't have to re-type the values each time:
 
-```
+```shell
 export VM_APP="hello-vm"
 export VM_NAMESPACE="vm-namespace"
 export SERVICE_ACCOUNT="vm-sa"
@@ -67,7 +67,7 @@ export SERVICE_ACCOUNT="vm-sa"
 
 Let's create the VM namespace and the service account we will use for VM workloads in the same namespace:
 
-```bash
+```shell
 $ kubectl create ns "${VM_NAMESPACE}"
 namespace/vm-namespace created
 
@@ -77,8 +77,8 @@ serviceaccount/vm-sa created
 
 We can now create a WorkloadGroup resource using Istio CLI. Run the command to save the WorkloadGroup YAML to `workloadgroup.yaml`
 
-```
-$ istioctl x workload group create --name "${VM_APP}" --namespace "${VM_NAMESPACE}" --labels app="${VM_APP}" --serviceAccount "${SERVICE_ACCOUNT}" > workloadgroup.yaml
+```shell
+istioctl x workload group create --name "${VM_APP}" --namespace "${VM_NAMESPACE}" --labels app="${VM_APP}" --serviceAccount "${SERVICE_ACCOUNT}" > workloadgroup.yaml
 ```
 
 Here's how the contents of the `workloadgroup.yaml` should look like:
@@ -101,14 +101,14 @@ spec:
 
 We can now deploy this WorkloadGroup to the virtual machine namespace:
 
-```
+```shell
 $ kubectl apply -f workloadgroup.yaml -n ${VM_NAMESPACE}
 workloadgroup.networking.istio.io/hello-vm created
 ```
 
 Virtual machine needs information about the cluster and Istio's control plane to connect to it. To generate the required files, we can run `istioctl x workload entry` command. We save all generated files to the `WORK_DIR`:
 
-```bash
+```shell
 $ istioctl x workload entry configure -f workloadgroup.yaml -o "${WORK_DIR}" --autoregister
 warning: a security token for namespace vm-namespace and service account vm-sa has been generated and stored at /vm-files/istio-token
 configuration generation into directory /vm-files was successful
@@ -124,8 +124,7 @@ From the instance details page, click the SSH dropdown and select "View gcloud c
 
 1. Copy the files from `vm-files` folder to the home folder on the instance. Replace `USERNAME` and `INSTANCE_IP` accordingly.
 
-
-    ```bash
+    ```shell
     $ scp vm-files/* [USERNAME]@[INSTANCE_IP]:~
     Enter passphrase for key '/Users/peterj/.ssh/id_rsa':
     bash: warning: setlocale: LC_ALL: cannot change locale (en_US.UTF-8)
@@ -135,61 +134,62 @@ From the instance details page, click the SSH dropdown and select "View gcloud c
     mesh.yaml                                            100%  667    14.4KB/s   00:00
     root-cert.pem                                        100% 1094    23.5KB/s   00:00
     ```
-     
-    Alternatively, you an use `gcloud` command to copy the files over: 
+
+    Alternatively, you an use `gcloud` command to copy the files over:
+
     ```sh
     gcloud compute scp vm-files/* [INSTANCE_NAME]:~ --zone=[INSTANCE_ZONE]
     ```
 
 2. SSH into the instance and copy the root certificate to `/etc/certs` (you can use the comamnd from the instance details page in the SSH dropdown):
 
-    ```bash
+    ```shell
     sudo mkdir -p /etc/certs
     sudo cp root-cert.pem /etc/certs/root-cert.pem
     ```
 
 3. Copy the `istio-token` file to `/var/run/secrets/tokens` folder:
 
-    ```bash
+    ```shell
     sudo mkdir -p /var/run/secrets/tokens
     sudo cp istio-token /var/run/secrets/tokens/istio-token
     ```
 
 4. Download and install the Istio sidecar package:
 
-    ```bash
+    ```shell
     curl -LO https://storage.googleapis.com/istio-release/releases/1.9.5/deb/istio-sidecar.deb
     sudo dpkg -i istio-sidecar.deb
     ```
 
 5. Copy `cluster.env` to `/var/lib/istio/envoy/`:
 
-    ```bash
+    ```shell
     sudo cp cluster.env /var/lib/istio/envoy/cluster.env
     ```
 
 6. Copy Mesh config (`mesh.yaml`) to `/etc/istio/config/mesh`:
 
-    ```bash
+    ```shell
     sudo cp mesh.yaml /etc/istio/config/mesh
     ```
 
 7. Add the istiod host to the `/etc/hosts` file:
 
-    ```bash
+    ```shell
     sudo sh -c 'cat hosts >> /etc/hosts'
     ```
 
 8. Change the ownership of files in `/etc/certs` and `/var/lib/istio/envoy` to the Istio proxy:
 
-    ```bash
+    ```shell
     sudo mkdir -p /etc/istio/proxy
     sudo chown -R istio-proxy /var/lib/istio /etc/certs /etc/istio/proxy /etc/istio/config /var/run/secrets /etc/certs/root-cert.pem
     ```
 
 With all files in place, we can start Istio on the virtual machine:
 
-```bash
+```shell
 sudo systemctl start istio
 ```
 
@@ -201,7 +201,7 @@ At this point, the virtual machine is configured to talk with the Istio's contro
 
 Let's deploy a Hello world application to the Kubernetes cluster. First, we need to enable the automatic sidecar injection in the `default` namespace:
 
-```
+```shell
 $ kubectl label namespace default istio-injection=enabled
 namespace/default labeled
 ```
@@ -251,7 +251,7 @@ Save the above file to `hello-world.yaml` and deploy it using `kubectl apply -f 
 
 Wait for the Pods to become ready and then go back to the virtual machine and try to access the Kubernetes service:
 
-```
+```shell
 $ curl http://hello-world.default
 Hello World
 ```
@@ -262,14 +262,14 @@ You can access any service running within your Kubernetes cluster from the virtu
 
 We can also run a workload on the virtual machine. Switch to the instance and run a simple Python HTTP server:
 
-```bash
+```shell
 $ sudo python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-If you try to curl to the instance IP directly, you will get back a response (directory listing): 
+If you try to curl to the instance IP directly, you will get back a response (directory listing):
 
-```
+```shell
 $ curl [INSTANCE_IP]
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dt
 d">
@@ -306,7 +306,7 @@ Save the above file to `hello-vm-service.yaml` and deploy it to the VM namespace
 
 Because we used the VM auto-registration, Istio automatically created the WorkloadEntry resource for us. You can check the WorkloadEntry resource with:
 
-```
+```shell
 $ kubectl get workloadentry -n vm-namespace
 NAME                  AGE   ADDRESS
 hello-vm-10.128.0.7   12m   10.128.0.7
@@ -314,7 +314,7 @@ hello-vm-10.128.0.7   12m   10.128.0.7
 
 We can now use the Kubernetes service name `hello-vm.vm-namespace` to access the workload on the virtual machine. Let's run a Pod inside the cluster and try to access the service from there:
 
-```
+```shell
 $ kubectl run curl --image=radial/busyboxplus:curl -i --tty --rm
 If you don't see a command prompt, try pressing enter.
 [ root@curl:/ ]$
@@ -322,7 +322,7 @@ If you don't see a command prompt, try pressing enter.
 
 After you get the command prompt in the Pod, you can run curl and access the workload. You should see a directory listing response. Similarly, you will notice a log entry on the instance where the HTTP server is running:
 
-```bash
+```shell
 [ root@curl:/ ]$ curl hello-vm.vm-namespace
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dt
 d">

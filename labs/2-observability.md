@@ -123,7 +123,7 @@ $ getmesh istioctl dashboard prometheus
 http://localhost:9090
 ```
 
-We can now open http://localhost:9090 in a browser to get to the Prometheus dashboard, as shown in the figure below. If running in Google Cloud Shell, click the Web Preview icon in the top right corner to open your browser on a specific port.
+We can now open <http://localhost:9090> in a browser to get to the Prometheus dashboard, as shown in the figure below. If running in Google Cloud Shell, click the Web Preview icon in the top right corner to open your browser on a specific port.
 
 ![Prometheus Dashboard](./img/2-prometheus-ui.png)
 
@@ -132,7 +132,7 @@ Open another terminal tab (click the **+** button) and let's make a couple of re
 Here's an example element from the Prometheus UI:
 
 ```sh
-istio_requests_total{app="my-nginx",connection_security_policy="none",destination_app="my-nginx",destination_canonical_revision="latest",destination_canonical_service="my-nginx",destination_cluster="Kubernetes",destination_principal="unknown",destination_service="my-nginx.default.svc.cluster.local",destination_service_name="my-nginx",destination_service_namespace="default",destination_version="unknown",destination_workload="my-nginx",destination_workload_namespace="default",instance="10.44.2.9:15020",istio_io_rev="default",job="kubernetes-pods",kubernetes_namespace="default",kubernetes_pod_name="my-nginx-9b596c8c4-kdlpr",pod_template_hash="9b596c8c4",reporter="destination",request_protocol="http",response_code="200",response_flags="-",security_istio_io_tlsMode="istio",service_istio_io_canonical_name="my-nginx",service_istio_io_canonical_revision="latest",source_app="unknown",source_canonical_revision="latest",source_canonical_service="unknown",source_cluster="unknown",source_principal="unknown",source_version="unknown",source_workload="unknown",source_workload_namespace="unknown"}	8
+istio_requests_total{app="my-nginx",connection_security_policy="none",destination_app="my-nginx",destination_canonical_revision="latest",destination_canonical_service="my-nginx",destination_cluster="Kubernetes",destination_principal="unknown",destination_service="my-nginx.default.svc.cluster.local",destination_service_name="my-nginx",destination_service_namespace="default",destination_version="unknown",destination_workload="my-nginx",destination_workload_namespace="default",instance="10.44.2.9:15020",istio_io_rev="default",job="kubernetes-pods",kubernetes_namespace="default",kubernetes_pod_name="my-nginx-9b596c8c4-kdlpr",pod_template_hash="9b596c8c4",reporter="destination",request_protocol="http",response_code="200",response_flags="-",security_istio_io_tlsMode="istio",service_istio_io_canonical_name="my-nginx",service_istio_io_canonical_revision="latest",source_app="unknown",source_canonical_revision="latest",source_canonical_service="unknown",source_cluster="unknown",source_principal="unknown",source_version="unknown",source_workload="unknown",source_workload_namespace="unknown"} 8
 ```
 
 ## Grafana Dashboards
@@ -143,11 +143,11 @@ With Grafana, we can monitor the health of Istio installation and applications r
 
 We can use the `grafana.yaml` to deploy a sample installation of Grafana with pre-configured dashboards.
 
-Ensure you deploy the Prometheus addon, before deploying Grafana, as Grafana uses Prometheus as its data source. 
+Ensure you deploy the Prometheus addon, before deploying Grafana, as Grafana uses Prometheus as its data source.
 
 Run the following command to deploy Grafana with pre-configured dashboards:
 
-```bash
+```shell
 $ kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.9/samples/addons/grafana.yaml
 serviceaccount/grafana created
 configmap/grafana created
@@ -161,7 +161,7 @@ configmap/istio-services-grafana-dashboards created
 
 Kubernetes deploys Grafana in the `istio-system` namespace. To access Grafana, we can use the `dashboard` command:
 
-```bash
+```shell
 $ getmesh istioctl dashboard grafana
 http://localhost:3000
 ```
@@ -180,19 +180,19 @@ From the Istio control plane dashboard, we can monitor the health and performanc
 
 This dashboard will show us the resource usage (memory, CPU, disk, Go routines) of the control plane, and information about the pilot, Envoy,  and webhooks.
 
-2. Istio Mesh Dashboard
+1. Istio Mesh Dashboard
 
 The mesh dashboard provides us an overview of all services running in the mesh. The dashboard includes the global request volume, success rate, and the number of 4xx and 5xx responses.
 
 ![Istio Mesh Dashboard](./img/2-grafana-mesh-dashboard.png)
 
-3. Istio Performance Dashboard
+1. Istio Performance Dashboard
 
 The performance dashboard shows us the Istio main components cost in terms of resource utilization under a steady load.
 
 ![Istio Performance Dashboard](./img/2-grafana-perf-dashboard.png)
 
-4. Istio Service Dashboard
+1. Istio Service Dashboard
 
 The service dashboard allows us to view details about our services in the mesh.
 
@@ -200,17 +200,17 @@ We can get information about the request volume, success rate, durations, and de
 
 ![Istio Service Dashboard](./img/2-grafana-service-dashboard.png)
 
-5. Istio Wasm Extension Dashboard
+1. Istio Wasm Extension Dashboard
 
-This dashboards shows the data about Wasm Vvirtual machines, proxy resource usage and information caching and fetching the remote Wasm modules. 
+This dashboards shows the data about Wasm Vvirtual machines, proxy resource usage and information caching and fetching the remote Wasm modules.
 
-6. Istio Workload Dashboard
+1. Istio Workload Dashboard
 
 This dashboard provides us a detailed breakdown of metrics for a workload.
 
 ![Istio Workload Dashboard](./img/2-grafana-workload-dashboard.png)
 
-# Distributed Tracing with Zipkin
+## Distributed Tracing with Zipkin
 
 Zipkin is a distributed tracing system. We can easily monitor distributed transactions that are happening in the service mesh and discover any performance or latency issues.
 
@@ -238,7 +238,7 @@ Traces you get with Istio service mesh are only captured at the service boundari
 
 To install Zipkin, we can use the `zipkin.yaml` file:
 
-```
+```shell
 $ kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.9/samples/addons/extras/zipkin.yaml
 deployment.apps/zipkin created
 service/tracing created
@@ -251,7 +251,7 @@ Click the button and select `serviceName` and then `my-nginx.default` service fr
 
 ![Zipkin Dashboard](./img/2-zipkin-dashboard.png)
 
-We can click on individual traces to dig deeper into the different spans. The detailed view will show us the duration of calls between the services, as well as the request details, such as method, protocol, status code, and similar. 
+We can click on individual traces to dig deeper into the different spans. The detailed view will show us the duration of calls between the services, as well as the request details, such as method, protocol, status code, and similar.
 
 The figure below shows traces for the web frontend and customers application we'll use in later labs.
 
@@ -265,7 +265,7 @@ Since we only have 1 service running (Nginx), you won't see a lot of details. La
 
 To install Kiali, use the `kiali.yaml` file:
 
-```
+```shell
 $ kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.9/samples/addons/kiali.yaml
 customresourcedefinition.apiextensions.k8s.io/monitoringdashboards.monito
 ring.kiali.io created
@@ -282,7 +282,7 @@ Note that if you see any errors such as `no matches for kind "MonitoringDashboar
 
 We can open Kiali using `getmesh istioctl dashboard kiali` and use the web preview to open it.
 
-Kiali can generate a service graph like the one in the figure below. 
+Kiali can generate a service graph like the one in the figure below.
 
 ![Kiali Graph](./img/2-kiali-graph.png)
 
@@ -480,7 +480,7 @@ Because the `app_containers` is not in the list of defauslt stat tags, we need t
 
 Let's edit the my-nginx deployment and add the following annotation:
 
-```
+```shell
 ...
 template:
   metadata:
@@ -490,7 +490,7 @@ template:
 
 Save the changes and wait for the Pod to be restarted. Once the Pod restarts, make a couple of requests to the $NGINX_IP and then look at the metrics:
 
-```
+```shell
 $ kubectl exec -it deploy/my-nginx -c istio-proxy -- curl localhost:15000/stats/prometheus | grep app_containers
 istio_requests_total{response_code="200",reporter="destination",source_workload="unknown",source_workload_namespace="unknown",source_principal="unknown",source_app="unknown",source_version="unknown",source_cluster="unknown",destination_workload="my-nginx",destination_workload_namespace="default",destination_principal="unknown",destination_app="my-nginx",destination_version="unknown",destination_service="my-nginx.default.svc.cluster.local",destination_service_name="my-nginx",destination_service_namespace="default",destination_cluster="Kubernetes",request_protocol="http",response_flags="-",grpc_response_status="",connection_security_policy="none",source_canonical_service="unknown",destination_canonical_service="my-nginx",source_canonical_revision="latest",destination_canonical_revision="latest",app_containers="nginx"} 13
 ```
@@ -555,7 +555,7 @@ spec:
 
 With the above YAML we're defining a new counter metric called `simple_counter`. Note that the value is a string and we could use an expression there to define when to increment the counter.
 
-Save the YAML to `new-metric.yaml` and create it using `kubectl apply -f new-metric.yaml`. 
+Save the YAML to `new-metric.yaml` and create it using `kubectl apply -f new-metric.yaml`.
 
 Just like we did before, we need to edit the my-nginx deployment and add the annotation to register this new metric. Run `kubectl edit my-nginx` and add the following annotation to the Pod template:
 
@@ -565,7 +565,7 @@ sidecar.istio.io/statsInclusionPrefixes: istio_simple_counter
 
 Note that we have to prefix the metric name with `istio`, because that's the stat prefix defined in the Envoy filter. Save the deployment, make a couple of requests to $NGINX_IP and then check the metrics:
 
-```
+```shell
 $ kubectl exec -it deploy/my-nginx -c istio-proxy -- curl localhost:15000/stats/prometheus | grep simple
 # TYPE istio_simple_counter counter
 istio_simple_counter{} 4

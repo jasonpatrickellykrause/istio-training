@@ -84,7 +84,7 @@ Here's a snippet from the above JSON configuration. Notice the Lua filter was in
 
 To cleanup, delete the workloads and the EnvoyFilter:
 
-```
+```shell
 kubectl delete -f envoy-demo-apps.yaml
 kubectl delete -f envoy-header-filter.yaml
 ```

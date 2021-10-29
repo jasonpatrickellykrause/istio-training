@@ -185,7 +185,7 @@ Save above YAML to `customers-delay.yaml` and update the VirtualService using `k
 
 To generate some traffic, let's open a separate terminal window and start making requests to the `GATEWAY_URL` in an endless loop:
 
-```bash
+```shell
 while true; do curl http://$GATEWAY_URL/; done
 ```
 
@@ -197,13 +197,13 @@ while true; do curl http://$GATEWAY_URL/; done
 
 We should start noticing some of the requests taking longer than usual. Let's open Grafana and observe these delays.
 
-```bash
-$ getmesh istioctl dash grafana
+```shell
+getmesh istioctl dash grafana
 ```
 
 When Grafana opens, click **Home** and the **Istio Service Dashboard**. On the dashboard, make sure to select the `web-frontend.default.svc.cluster.local` in the Service dropdown.
 
-Expand the **Service Workloads** section and you will notice the increased duration on the **Incoming Request Duration by Service Workload** graph, as shown in the figure below. 
+Expand the **Service Workloads** section and you will notice the increased duration on the **Incoming Request Duration by Service Workload** graph, as shown in the figure below.
 
 ![Incoming Request Duration by Source](./img/4-incoming-req-duration.png)
 
@@ -241,12 +241,11 @@ spec:
 
 Save the above YAML to `customers-fault.yaml` and update the VirtualService with `kubectl apply -f customers-fault.yaml`.
 
-Just like before, we will start noticing failures from the request loop. 
+Just like before, we will start noticing failures from the request loop.
 
 Go back to Grafana and open the **Istio Mesh Dashboard**. Note how the global success rate has dropped as well as the graph showing 5xx responses.
 
 ![500s](./img/4-5xx-rate.png)
-
 
 From the same dashboard, we can click the `web-frontend.default` workload from the list of workloads to open a dedicated dashboard for that workload.
 
@@ -270,7 +269,7 @@ If we click on the `web-frontend` service and look at the sidebar on the right, 
 
 Delete the Deployments, Services, VirtualServices, DestinationRule, and the Gateway:
 
-```bash
+```shell
 kubectl delete deploy web-frontend customers-{v1,v2}
 kubectl delete svc customers web-frontend
 kubectl delete vs customers web-frontend

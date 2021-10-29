@@ -73,7 +73,7 @@ Save the changes and exit the editor.
 We can now use `kubectl exec` to get the terminal inside the `istio-proxy` container and look at the iptables rules. You can get the Pod name by running `kubectl get pods`, then use the following command to get a terminal inside the `istio-proxy` container:
 
 ```sh
-$ kubectl exec -it [httpbin-pod-name] -c istio-proxy -- /bin/bash
+kubectl exec -it [httpbin-pod-name] -c istio-proxy -- /bin/bash
 ```
 
 Once inside the container we can list all rules in all chains in the NAT table using `sudo iptables -L -t nat`. You'll get an output like the one below:
@@ -125,7 +125,7 @@ REDIRECT   tcp  --  anywhere             anywhere             redir ports 15001
 
 You can also inspect individual chains by specifying the chain name:
 
-```
+```shell
 $ sudo iptables -L ISTIO_INBOUND -t nat
 Chain ISTIO_INBOUND (1 references)
 target     prot opt source               destination

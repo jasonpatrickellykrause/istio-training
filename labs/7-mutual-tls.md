@@ -25,7 +25,7 @@ Save the above YAML to `gateway.yaml` and deploy the Gateway using `kubectl appl
 
 Next, we will create the Web Frontend and the Customer service deployments and related Kubernetes services. We will disable the automatic sidecar injection in the `default` namespace before we start deploying, so the proxy doesn't get injected into the Web frontend deployment. Before we deploy the Customer service, we will enable the injection again.
 
-```bash
+```shell
 $ kubectl label namespace default istio-injection-
 namespace/default labeled
 ```
@@ -93,7 +93,7 @@ spec:
 
 Save the above YAML to `web-frontend.yaml` and create the deployment and service using `kubectl apply -f web-frontend.yaml`. If we look at the running Pods, we should see one Pod with a single container running, indicated by the `1/1` in the `READY` column:
 
-```bash
+```shell
 $ kubectl get po
 NAME                           READY   STATUS    RESTARTS   AGE
 web-frontend-659f65f49-cbhvl   1/1     Running   0          7m31s
@@ -101,12 +101,12 @@ web-frontend-659f65f49-cbhvl   1/1     Running   0          7m31s
 
 Let's enable the automatic injection:
 
-```bash
+```shell
 $ kubectl label namespace default istio-injection=enabled
 namespace/default labeled
 ```
 
-And the deploy the v1 of the Customer service: 
+And the deploy the v1 of the Customer service:
 
 ```yaml
 apiVersion: apps/v1
@@ -166,9 +166,9 @@ spec:
 
 Save the above to `customers-v1.yaml` and create the deployment and service using `kubectl apply -f customers-v1.yaml`.
 
-We should have both applications deployed and running - the customers service will have two containers, and the web frontend service will have one: 
+We should have both applications deployed and running - the customers service will have two containers, and the web frontend service will have one:
 
-```bash
+```shell
 $ kubectl get po
 NAME                            READY   STATUS    RESTARTS   AGE
 customers-v1-7857944975-qrqsz   2/2     Running   0          4m1s
@@ -213,14 +213,14 @@ Save the above to `vs-customers-gateway.yaml` and update the VirtualService usin
 
 We can now specify the Host header and we'll be able to send the requests through the ingress gateway (`GATEWAY_URL`) to the customers service:
 
-```bash
+```shell
 $ curl -H "Host: customers.default.svc.cluster.local" http://$GATEWAY_URL;
 [{"name":"Jewel Schaefer"},{"name":"Raleigh Larson"},{"name":"Eloise Senger"},{"name":"Moshe Zieme"},{"name":"Filiberto Lubowitz"},{"name":"Ms.Kadin Kling"},{"name":"Jennyfer Bergstrom"},{"name":"Candelario Rutherford"},{"name":"Kenyatta Flatley"},{"name":"Gianni Pouros"}]
 ```
 
 To generate some traffic to both the Web frontend and Customers service through the ingress, open the two terminal windows and run one command in each:
 
-```
+```shell
 // Terminal 1 
 $ while true; do curl -H "Host: customers.default.svc.cluster.local" http://$GATEWAY_URL; done
 ...
@@ -232,7 +232,7 @@ Open Kiali and look at the Graph. From the **Display** dropdown, make sure we ch
 
 ![mTLS to Customers and plain text to web-frontend](./img/7-kiali-two-svc.png)
 
-Notice there is a padlock icon between the ingress gateway and the customers service, which means the traffic is sent using mTLS. However, there's no padlock between the unknown (web frontend) and the customers service. Istio is sending plain text traffic to and from the services without the sidecar injected. 
+Notice there is a padlock icon between the ingress gateway and the customers service, which means the traffic is sent using mTLS. However, there's no padlock between the unknown (web frontend) and the customers service. Istio is sending plain text traffic to and from the services without the sidecar injected.
 
 Let's see what happens if we enable mTLS in STRICT mode. We expect the calls from the frontend to the customer service to start failing because there's no proxy injected to do the mTLS communication. On the other hand, the calls from the ingress gateway to the customer service will continue working.
 
@@ -257,10 +257,9 @@ If we delete the PeerAuthentication resource deployed earlier (`kubectl delete p
 
 Delete the Deployments, Services, VirtualServices, and the Gateway:
 
-```bash
+```shell
 kubectl delete deploy web-frontend customers-v1
 kubectl delete svc customers web-frontend
 kubectl delete vs customers web-frontend
 kubectl delete gateway gateway
 ```
-
