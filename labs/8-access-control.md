@@ -156,7 +156,15 @@ spec:
               number: 80
 ```
 
-Save the above to `customers-v1.yaml` and create the deployment and service using `kubectl apply -f customers-v1.yaml`. If we open the `GATEWAY_URL` the web frontend page with the data from the customers v1 service should be displayed.
+Save the above to `customers-v1.yaml` and create the deployment and service using `kubectl apply -f customers-v1.yaml`. 
+
+LEt's set the `GATEWAY_URL` variable:
+
+```sh
+export GATEWAY_URL=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+```
+
+If we open the `GATEWAY_URL` the web frontend page with the data from the customers v1 service should be displayed.
 
 Let's start by creating an authorization policy that denies all requests in the default namespace. 
 
@@ -175,6 +183,7 @@ Save the above to `deny-all.yaml` and create the policy using `kubectl apply -f 
 If we try to access `GATEWAY_URL` we will get back the following response:
 
 ```bash
+$ curl http://$GATEWAY_URL
 RBAC: access denied
 ```
 
@@ -210,9 +219,7 @@ spec:
   rules:
     - from:
         - source:
-            namespaces: ["istio-system"]
-        - source:
-            principals: ["istio-ingressgateway-service-account"]
+            principals: ["cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"]
 ```
 
 Save the above to `allow-ingress-frontend.yaml` and create the policy using `kubectl apply -f allow-ingress-frontend.yaml`.
@@ -247,19 +254,35 @@ spec:
   rules:
   - from:
     - source:
-        namespaces: ["default"]
-    - source:
-        principals: ["web-frontend"]
+        principals: ["cluster.local/ns/default/sa/web-frontend"]
 ```
 
 Save the above YAML to `allow-web-frontend-customers.yaml` and create the policy using `kubectl apply -f allow-web-frontend-customers.yaml`. 
 
-As soon as the policy is created, we will see the web frontend working again - it will get the customer service responses. You can try that it works by opening the GATEWAY_URL in the browser.
-
-You can set the `GATEWAY_URL` variable like this:
+As soon as the policy is created, we will see the web frontend working again - it will get the customer service responses. You can try that it works by opening the GATEWAY_URL in the browser or using cURL to send the request to the GATEWAY_URL.
 
 ```sh
-export GATEWAY_URL=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+$ curl http://$GATEWAY_URL
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Web Frontend</title>
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body class="bg-tetrate-black">
+...
+```
+
+If we create a Pod inside the cluster again to try and directly access `web-frontend` and `customers` service, we'll notice that the calls will continue to fail, which is expected because we haven't explicitly allowed calls from the cURL Pod:
+
+```
+$ kubectl run curl --image=radial/busyboxplus:curl -i --tty --rm
+If you don't see a command prompt, try pressing enter.
+[ root@curl:/ ]$ curl customers
+RBAC: access denied
+[ root@curl:/ ]$ curl web-frontend
+RBAC: access denied
+[ root@curl:/ ]$
 ```
 
 We have used multiple authorization policies to explicitly allow calls from the ingress to the front end and from the frontend to the customer service. Using a deny-all policy is a good way to start because we can control, manage, and then explicitly allow the communication we want to happen between services.

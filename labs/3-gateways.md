@@ -25,10 +25,17 @@ Save the above YAML to `gateway.yaml` and deploy the Gateway using `kubectl appl
 
 If we try to access the ingress gateways' external IP address, we will get back an HTTP 404, because there aren't any VirtualServices bound to the Gateway.
 
-Let's look at the Envoy config and see the config that gets created:
+Let's look at the Envoy config and see the config that gets created. First, we need to get the ingress gateway Pod name:
+
+```sh
+$ kubectl get po -l app=istio-ingressgateway -A
+NAMESPACE      NAME                                    READY   STATUS    RESTARTS   AGE
+istio-system   istio-ingressgateway-777d97778b-8j8mj   1/1     Running   0          30m
+```
+We can now use the Pod name (in this case `istio-ingressgateway-777d97778b-8j8mj`) in the proxy config routes command. Don't forget to add the `.istio-system` to the full Pod name:
 
 ```
-$ istioctl pc routes [ingress-gateway-pod]
+$ getmesh istioctl pc routes istio-ingressgateway-777d97778b-8j8mj.istio-system
 
 NAME        DOMAINS     MATCH                  VIRTUAL SERVICE
 http.80     *           /*                     404
@@ -36,14 +43,6 @@ http.80     *           /*                     404
             *           /stats/prometheus*
 ```
 Note that regardless what the hosts are set to in the gateway, because we don't have any virtual services attached it will show a 404.
-
-We can also use port-forward to look at the configuration of the proxy:
-
-```
-kubectl port-forward  pod/[ingress-gateway-pod] -n istio-system 15000:15000
-```
-
-If we scroll to the bottom you'll see the blackhole virtual host without any routes defined.
 
 To get the ingress gateways external IP address, run the command below and look at the `EXTERNAL-IP` column value:
 
@@ -140,26 +139,20 @@ Save the above YAML to `vs-hello-world.yaml` and create the VirtualService using
 ```bash
 $ kubectl get vs
 NAME          GATEWAYS    HOSTS   AGE
-hello-world   [gateway]   [*]     3m31s
+hello-world   [gateway]   ["hello.com"]     3m31s
 ```
 
-Let's check the Envoy routes again.
+Let's check the Envoy routes again:
 
 ```
-$ istioctl pc routes [ingress-gateway-pod]
+$ getmesh istioctl pc routes [ingress-gateway-pod]
 NAME        DOMAINS       MATCH                  VIRTUAL SERVICE
 http.80     hello.com     /*                     hello-world.default
             *             /healthz/ready*
             *             /stats/prometheus*
 ```
 
-This time you'll notice the domain is set to hello.com and a virtual service mapped to that domain shows up as well.
-
-If we look at the Envoy config, we'll see that the actual route is defined:
-
-```
-kubectl port-forward pod/[ingress-gateway-pod] -n istio-system 15000:15000
-```
+This time you'll notice the domain is set to `hello.com` and a virtual service (`hello-world.default`) mapped to that domain shows up as well.
 
 If we run cURL against `GATEWAY_URL` or open it in the browser, we will get back a response of `Hello World`:
 

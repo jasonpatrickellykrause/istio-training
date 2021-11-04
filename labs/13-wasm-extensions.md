@@ -9,14 +9,14 @@ We'll start with something trivial for our first example and write a simple Wasm
 Let's get started by downloading func-e CLI and installing it to `/usr/local/bin`:
 
 ```sh
-curl https://func-e.io/install.sh | bash -s -- -b /usr/local/bin
+curl https://func-e.io/install.sh | sudo bash -s -- -b /usr/local/bin
 ```
 
 Once downloaded, let's run it to make sure all is good:
 
 ```sh
 $ func-e --version
-func-e version 0.5.0
+func-e version 1.0.0
 ```
 
 ## Installing TinyGo
@@ -26,15 +26,15 @@ TinyGo powers the SDK we'll be using as Wasm doesn't support the official Go com
 Let's download and install the TinyGo:
 
 ```sh
-wget https://github.com/tinygo-org/tinygo/releases/download/v0.18.0/tinygo_0.18.0_amd64.deb
-sudo dpkg -i tinygo_0.18.0_amd64.deb
+wget https://github.com/tinygo-org/tinygo/releases/download/v0.20.0/tinygo_0.20.0_amd64.deb
+sudo dpkg -i tinygo_0.20.0_amd64.deb
 ```
 
 You can run `tinygo version` to check the installation is successful:
 
 ```sh
 $ tinygo version
-tinygo version 0.18.0 linux/amd64 (using go version go1.16.5 and LLVM version 11.0.0)
+tinygo version 0.20.0 linux/amd64 (using go version go1.17.2 and LLVM version 11.0.0)
 ```
 
 ## Scaffolding the Wasm module
@@ -184,10 +184,10 @@ Envoy instance should start without any issues. Once it's started, we can send a
 
 ```sh
 $ curl localhost:18000
-[2021-06-22 16:39:31.491][5314][info][wasm] [external/envoy/source/extensions/common/wasm/context.cc:1218] wasm log: OnHttpRequestHeaders
-[2021-06-22 16:39:31.491][5314][info][wasm] [external/envoy/source/extensions/common/wasm/context.cc:1218] wasm log: OnHttpResponseHeaders
-[2021-06-22 16:39:31.492][5314][info][wasm] [external/envoy/source/extensions/common/wasm/context.cc:1218] wasm log: 2 finished
-example body
+[2021-11-04 22:41:19.982][91521][info][wasm] [source/extensions/common/wasm/context.cc:1167] wasm log: OnHttpRequestHeaders
+[2021-11-04 22:41:19.982][91521][info][wasm] [source/extensions/common/wasm/context.cc:1167] wasm log: OnHttpResponseHeaders
+[2021-11-04 22:41:19.983][91521][info][wasm] [source/extensions/common/wasm/context.cc:1167] wasm log: 2 finished
+hello world
 ```
 
 The output shows the two log entries - one from the OnHttpRequestHeaders handler and the second one from the OnHttpResponseHeaders handler. The last line is the example response returned by the direct response configuration in the filter.
@@ -235,7 +235,7 @@ $ curl -v localhost:18000
 < date: Mon, 22 Jun 2021 17:02:31 GMT
 < server: envoy
 <
-example body
+hello world
 ```
 
 ## Reading values from configuration
@@ -333,7 +333,7 @@ Let's rebuild the extension again:
 tinygo build -o main.wasm -scheduler=none -target=wasi main.go
 ```
 
-Also, let's update the config file to include additional headers in the filter configuration:
+Also, let's update the config file to include additional headers in the filter configuration (the `configuration` field):
 
 ```yaml
 - name: envoy.filters.http.wasm

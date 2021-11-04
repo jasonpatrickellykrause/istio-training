@@ -6,21 +6,45 @@ After we've created a Kubernetes cluster, we can download, install Istio, and co
 
 ## Installing Istio on a Kubernetes cluster
 
-Let's download Istio 1.9.5:
+If you have any previous versions or instances of Istio running, make sure you remove them. Check the [Installing Istio](./1-installing-istio.md) lab on how to do that.
+
+We'll download Istio 1.11.3 because supporting scripts and files are part of the Istio installation package. Let's download Istio 1.11.3:
 
 ```bash
-$ curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.9.5 sh -
+$ curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.11.3 sh -
 ```
 
-With Istio downloaded, we can install it using the default profile with automatic WorkloadEntry creation:
+We can now create an IstioOperator resource we'll use to install Istio. One of the differences between regular Istio installation and one that supports VM workloads is in setting cluster name and network. In this lab we'll set the network name to an empty string because we'll only use a single network. For multi-network scenario we'd set the VM and the cluster network name separately. 
+
+```yaml
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+metadata:
+  name: istio
+spec:
+  values:
+    global:
+      meshID: mesh1
+      multiCluster:
+        clusterName: Kubernetes
+      network: ""
+```
+
+Save the above YAML to `istio-vm-install.yaml`.
+
+We'll use `istioctl` to install Istio on the cluster. Additionally, we'll set the `PILOT_ENABLE_WORKLOAD_ENTRY_AUTOREGISTRATION` and `PILOT_ENABLE_WORKLOAD_ENTRY_HEALTHCHECKS` to true - note that these features are in being actively developed and are considered experimental. 
+
+Let's deploy the IstioOperator resource: 
 
 ```bash
-istioctl install --set values.pilot.env.PILOT_ENABLE_WORKLOAD_ENTRY_AUTOREGISTRATION=true
+istioctl install -f istio-vm-install.yaml --set values.pilot.env.PILOT_ENABLE_WORKLOAD_ENTRY_AUTOREGISTRATION=true --set values.pilot.env.PILOT_ENABLE_WORKLOAD_ENTRY_HEALTHCHECKS=true
 ```
 
-Next, we will deploy a separate gateway that we will use to expose the Istio's control plane to the virtual machine. The Istio package we downloaded contains a script we can use to generate the YAML that will deploy an Istio operator that creates the new gateway called `istio-eastwestgateway`.
+Once the installation completes, we can deploy a separate ingress gateway that will be used to expose the Istio's control plane to the virtual machine.
 
-Go to the folder where you downloaded Istio (e.g. `istio-1.9.5`) and run this script:
+The Istio package we downloaded contains a script we can use to generate the YAML that will deploy an Istio operator that creates the new gateway called `istio-eastwestgateway`.
+
+Go to the folder where you downloaded Istio (e.g. `istio-1.11.3`) and run this script:
 
 ```bash
 samples/multicluster/gen-eastwest-gateway.sh --single-cluster | istioctl install -y -f -
@@ -41,7 +65,7 @@ For virtual machines to access the Istio's control plane, we need to create a Ga
 We can use another script from the Istio package to create these resources and expose the control plane:
 
 ```
-$ kubectl apply -f samples/multicluster/expose-istiod.yaml
+$ kubectl apply -f samples/multicluster/expose-istiod.yaml -n istio-system
 gateway.networking.istio.io/istiod-gateway created
 virtualservice.networking.istio.io/istiod-vs created
 ```
@@ -75,9 +99,28 @@ $ kubectl create serviceaccount "${SERVICE_ACCOUNT}" -n "${VM_NAMESPACE}"
 serviceaccount/vm-sa created
 ```
 
-We can now create a WorkloadGroup resource using Istio CLI. Run the command to save the WorkloadGroup YAML to `workloadgroup.yaml`
 
-```
+<!-- First, we'll create a template WorkloadGroup resource for the VM:
+
+```yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: WorkloadGroup
+metadata:
+  name: "${VM_APP}"
+  namespace: "${VM_NAMESPACE}"
+spec:
+  metadata:
+    labels:
+      app: "${VM_APP}"
+  template:
+    serviceAccount: "${SERVICE_ACCOUNT}"
+    network: ""
+``` -->
+
+
+Next we'll create the WorkloadGroup resource using Istio CLI. Run the command to save the WorkloadGroup YAML to `workloadgroup.yaml`
+
+```sh
 $ istioctl x workload group create --name "${VM_APP}" --namespace "${VM_NAMESPACE}" --labels app="${VM_APP}" --serviceAccount "${SERVICE_ACCOUNT}" > workloadgroup.yaml
 ```
 
@@ -109,14 +152,22 @@ workloadgroup.networking.istio.io/hello-vm created
 Virtual machine needs information about the cluster and Istio's control plane to connect to it. To generate the required files, we can run `istioctl x workload entry` command. We save all generated files to the `WORK_DIR`:
 
 ```bash
-$ istioctl x workload entry configure -f workloadgroup.yaml -o "${WORK_DIR}" --autoregister
+$ istioctl x workload entry configure -f workloadgroup.yaml -o "${WORK_DIR}" --autoregister --clusterID "Kubernetes"
 warning: a security token for namespace vm-namespace and service account vm-sa has been generated and stored at /vm-files/istio-token
 configuration generation into directory /vm-files was successful
 ```
 
+The above command generates the following files:
+
+- `cluster.env`: Contains metadata that identifies what namespace, service account, network CIDR and (optionally) what inbound ports to capture.
+- `istio-token`: A Kubernetes token used to get certs from the CA.
+- `mesh.yaml`: Provides `ProxyConfig` to configure `discoveryAddress`, health-checking probes, and some authentication options.
+- `root-cert.pem`: The root certificate used to authenticate.
+- `hosts`: An addendum to /etc/hosts that the proxy will use to reach istiod for xDS.
+
 ## Configuring the virtual machine
 
-Now it's time to create and configure a virtual machine. I am running the virtual machine in GCP, just like the Kubernetes cluster. The virtual machine is using the Debian GNU/Linux 10 (Buster) image. Make sure you check "Allow HTTP traffic" under the Firewall section and you have SSH access to the instance.
+Now it's time to create and configure a virtual machine. We'll berunning the virtual machine in GCP, just like the Kubernetes cluster. The virtual machine is using the Debian GNU/Linux 10 (Buster) image. Make sure you check "Allow HTTP traffic" under the Firewall section and you have SSH access to the instance.
 
 >In this example, we run a simple Python HTTP server on port 80. You could configure any other service on a different port. Just make sure you configure the security and firewall rules accordingly.
 
@@ -124,26 +175,19 @@ From the instance details page, click the SSH dropdown and select "View gcloud c
 
 1. Copy the files from `vm-files` folder to the home folder on the instance. Replace `USERNAME` and `INSTANCE_IP` accordingly.
 
-
-    ```bash
-    $ scp vm-files/* [USERNAME]@[INSTANCE_IP]:~
-    Enter passphrase for key '/Users/peterj/.ssh/id_rsa':
-    bash: warning: setlocale: LC_ALL: cannot change locale (en_US.UTF-8)
-    cluster.env                                          100%  589    12.6KB/s   00:00
-    hosts                                                100%   38     0.8KB/s   00:00
-    istio-token                                          100%  906    19.4KB/s   00:00
-    mesh.yaml                                            100%  667    14.4KB/s   00:00
-    root-cert.pem                                        100% 1094    23.5KB/s   00:00
-    ```
-     
-    Alternatively, you an use `gcloud` command to copy the files over: 
-    ```sh
-    gcloud compute scp vm-files/* [INSTANCE_NAME]:~ --zone=[INSTANCE_ZONE]
-    ```
+  ```sh
+  $ gcloud compute scp vm-files/* [INSTANCE_NAME]:~ --zone=[INSTANCE_ZONE]
+    cluster.env                                                       100%  627   626.9KB/s   00:00    
+    hosts                                                             100%   36    50.7KB/s   00:00    
+    istio-token                                                       100%  905     1.4MB/s   00:00    
+    mesh.yaml                                                         100%  668   918.7KB/s   00:00    
+    root-cert.pem                                                     100% 1094     1.7MB/s   00:00
+  ```
 
 2. SSH into the instance and copy the root certificate to `/etc/certs` (you can use the comamnd from the instance details page in the SSH dropdown):
 
     ```bash
+    gcloud beta compute ssh --zone=[INSTANCE_ZONE] [INSTANCE_NAME]
     sudo mkdir -p /etc/certs
     sudo cp root-cert.pem /etc/certs/root-cert.pem
     ```
@@ -158,7 +202,7 @@ From the instance details page, click the SSH dropdown and select "View gcloud c
 4. Download and install the Istio sidecar package:
 
     ```bash
-    curl -LO https://storage.googleapis.com/istio-release/releases/1.9.5/deb/istio-sidecar.deb
+    curl -LO https://storage.googleapis.com/istio-release/releases/1.11.4/deb/istio-sidecar.deb
     sudo dpkg -i istio-sidecar.deb
     ```
 
@@ -177,7 +221,7 @@ From the instance details page, click the SSH dropdown and select "View gcloud c
 7. Add the istiod host to the `/etc/hosts` file:
 
     ```bash
-    sudo sh -c 'cat hosts >> /etc/hosts'
+    sudo sh -c 'cat $(eval echo ~$SUDO_USER)/hosts >> /etc/hosts'
     ```
 
 8. Change the ownership of files in `/etc/certs` and `/var/lib/istio/envoy` to the Istio proxy:
@@ -193,13 +237,13 @@ With all files in place, we can start Istio on the virtual machine:
 sudo systemctl start istio
 ```
 
-You can check that the `istio` service is running with `systemctl status istio`.
+You can check that the `istio` service is running with `systemctl status istio`. Alternatively, we can look at the contents of the `/var/log/istio/istio.log` to see that the proxy was successfully started.
 
 At this point, the virtual machine is configured to talk with the Istio's control plane in the Kubernetes cluster.
 
 ## Access services from the virtual machine
 
-Let's deploy a Hello world application to the Kubernetes cluster. First, we need to enable the automatic sidecar injection in the `default` namespace:
+From a different terminal window, we can now deploy a Hello world application to the Kubernetes cluster. First, we need to enable the automatic sidecar injection in the `default` namespace:
 
 ```
 $ kubectl label namespace default istio-injection=enabled
@@ -260,7 +304,7 @@ You can access any service running within your Kubernetes cluster from the virtu
 
 ## Run services on the virtual machine
 
-We can also run a workload on the virtual machine. Switch to the instance and run a simple Python HTTP server:
+We can also run a workload on the virtual machine. Switch to the virtuam machine instance and run a simple Python HTTP server:
 
 ```bash
 $ sudo python3 -m http.server 80
@@ -312,7 +356,7 @@ NAME                  AGE   ADDRESS
 hello-vm-10.128.0.7   12m   10.128.0.7
 ```
 
-We can now use the Kubernetes service name `hello-vm.vm-namespace` to access the workload on the virtual machine. Let's run a Pod inside the cluster and try to access the service from there:
+We can now use the Kubernetes service name `hello-vm.vm-namespace` to access the workload running on the virtual machine (the Python server). Let's run a Pod inside the cluster and try to access the service from there:
 
 ```
 $ kubectl run curl --image=radial/busyboxplus:curl -i --tty --rm

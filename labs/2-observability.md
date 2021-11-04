@@ -107,7 +107,7 @@ Prometheus is an open-source monitoring system and time series database. Istio u
 To install Prometheus we can use the sample installation:
 
 ```sh
-$ kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.9/samples/addons/prometheus.yaml
+$ kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.11/samples/addons/prometheus.yaml
 serviceaccount/prometheus created
 configmap/prometheus created
 clusterrole.rbac.authorization.k8s.io/prometheus created
@@ -127,13 +127,21 @@ We can now open http://localhost:9090 in a browser to get to the Prometheus dash
 
 ![Prometheus Dashboard](./img/2-prometheus-ui.png)
 
-Open another terminal tab (click the **+** button) and let's make a couple of requests to the $NGINX_IP environment variable we've created at the beginning. Then, from the Prometheus UI you can search for one of the Istio metrics (`istio_requests_total` for example) to get the idea on what data is being collected for requests.
+Open another terminal tab (click the **+** button) and let's make 100 requests to the $NGINX_IP environment variable we've created at the beginning.
+
+```sh
+$ for ((i=1;i<=100;i++)); do curl -s $NGINX_IP > /dev/null; done
+```
+
+Then, from the Prometheus UI you can search for one of the Istio metrics (`istio_requests_total` for example) to get the idea on what data is being collected for requests.
 
 Here's an example element from the Prometheus UI:
 
 ```sh
 istio_requests_total{app="my-nginx",connection_security_policy="none",destination_app="my-nginx",destination_canonical_revision="latest",destination_canonical_service="my-nginx",destination_cluster="Kubernetes",destination_principal="unknown",destination_service="my-nginx.default.svc.cluster.local",destination_service_name="my-nginx",destination_service_namespace="default",destination_version="unknown",destination_workload="my-nginx",destination_workload_namespace="default",instance="10.44.2.9:15020",istio_io_rev="default",job="kubernetes-pods",kubernetes_namespace="default",kubernetes_pod_name="my-nginx-9b596c8c4-kdlpr",pod_template_hash="9b596c8c4",reporter="destination",request_protocol="http",response_code="200",response_flags="-",security_istio_io_tlsMode="istio",service_istio_io_canonical_name="my-nginx",service_istio_io_canonical_revision="latest",source_app="unknown",source_canonical_revision="latest",source_canonical_service="unknown",source_cluster="unknown",source_principal="unknown",source_version="unknown",source_workload="unknown",source_workload_namespace="unknown"}	8
 ```
+
+You can press CTRL+C to stop running the dashboard command.
 
 ## Grafana Dashboards
 
@@ -148,7 +156,7 @@ Ensure you deploy the Prometheus addon, before deploying Grafana, as Grafana use
 Run the following command to deploy Grafana with pre-configured dashboards:
 
 ```bash
-$ kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.9/samples/addons/grafana.yaml
+$ kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.11/samples/addons/grafana.yaml
 serviceaccount/grafana created
 configmap/grafana created
 service/grafana created
@@ -159,12 +167,14 @@ configmap/istio-services-grafana-dashboards created
 
 >This Grafana installation is not intended for running in production, as it's not tuned for performance or security.
 
-Kubernetes deploys Grafana in the `istio-system` namespace. To access Grafana, we can use the `dashboard` command:
+Kubernetes deploys Grafana in the `istio-system` namespace. Once Grafana pod is running, we can access it using the `dashboard` command:
 
 ```bash
 $ getmesh istioctl dashboard grafana
 http://localhost:3000
 ```
+
+>The default port number Grafana dashboard gets exposed on is `3000`. However, since we're running in Google Cloud Shell the 3000 port number is taken, so dashboard command will randomly select a port for you. Make sure you replace the port number 3000 with the number you see on your screen.
 
 We can open `http://localhost:3000` in the browser to go to Grafana. Then, click Home and the **istio** folder to see the installed dashboards, as shown in the figure below.
 
@@ -239,7 +249,7 @@ Traces you get with Istio service mesh are only captured at the service boundari
 To install Zipkin, we can use the `zipkin.yaml` file:
 
 ```
-$ kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.9/samples/addons/extras/zipkin.yaml
+$ kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.11/samples/addons/extras/zipkin.yaml
 deployment.apps/zipkin created
 service/tracing created
 service/zipkin created
@@ -251,7 +261,7 @@ Click the button and select `serviceName` and then `my-nginx.default` service fr
 
 ![Zipkin Dashboard](./img/2-zipkin-dashboard.png)
 
-We can click on individual traces to dig deeper into the different spans. The detailed view will show us the duration of calls between the services, as well as the request details, such as method, protocol, status code, and similar. 
+We can click on the **Show** button next to each trace to dig deeper into the different spans. The detailed view will show us the duration of calls between the services, as well as the request details, such as method, protocol, status code, and similar. 
 
 The figure below shows traces for the web frontend and customers application we'll use in later labs.
 
@@ -266,7 +276,7 @@ Since we only have 1 service running (Nginx), you won't see a lot of details. La
 To install Kiali, use the `kiali.yaml` file:
 
 ```
-$ kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.9/samples/addons/kiali.yaml
+$ kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.11/samples/addons/kiali.yaml
 customresourcedefinition.apiextensions.k8s.io/monitoringdashboards.monito
 ring.kiali.io created
 serviceaccount/kiali created
@@ -330,7 +340,7 @@ metadata:
   name: update-envoy-metric
 spec:
   workloadSelector:
-    label:
+    labels:
       app: my-nginx
   configPatches:
   - applyTo: HTTP_FILTER
@@ -343,7 +353,7 @@ spec:
             subFilter:
               name: envoy.filters.http.router
       proxy:
-        proxyVersion: ^1\.9.*
+        proxyVersion: ^1\.11.*
     patch:
       operation: INSERT_BEFORE
       value:
@@ -385,7 +395,7 @@ spec:
             subFilter:
               name: envoy.filters.http.router
       proxy:
-        proxyVersion: ^1\.9.*
+        proxyVersion: ^1\.11.*
     patch:
       operation: INSERT_BEFORE
       value:
@@ -433,7 +443,7 @@ spec:
             subFilter:
               name: envoy.filters.http.router
       proxy:
-        proxyVersion: ^1\.9.*
+        proxyVersion: ^1\.11.*
     patch:
       operation: INSERT_BEFORE
       value:
@@ -478,7 +488,7 @@ Save the above YAML to `add-dimension-ef.yaml` and deploy it using `kubectl appl
 
 Because the `app_containers` is not in the list of defauslt stat tags, we need to include it. The way to do that is by either updating the IstioOperator and doing it mesh-wide or adding an annotation to the Pod spec.
 
-Let's edit the my-nginx deployment and add the following annotation:
+Let's edit the my-nginx deployment (`kubectl edit deploy my-nginx`) and add the following annotation:
 
 ```
 ...
@@ -520,7 +530,7 @@ spec:
             subFilter:
               name: envoy.filters.http.router
       proxy:
-        proxyVersion: ^1\.9.*
+        proxyVersion: ^1\.11.*
     patch:
       operation: INSERT_BEFORE
       value:
@@ -557,7 +567,9 @@ With the above YAML we're defining a new counter metric called `simple_counter`.
 
 Save the YAML to `new-metric.yaml` and create it using `kubectl apply -f new-metric.yaml`. 
 
-Just like we did before, we need to edit the my-nginx deployment and add the annotation to register this new metric. Run `kubectl edit my-nginx` and add the following annotation to the Pod template:
+Just like we did before, we need to edit the my-nginx deployment and add the annotation to register this new metric.
+
+Run `kubectl edit deploy my-nginx` and add the following annotation to the Pod template, right after the annotation we added earlier:
 
 ```yaml
 sidecar.istio.io/statsInclusionPrefixes: istio_simple_counter
@@ -573,8 +585,16 @@ istio_simple_counter{} 4
 
 ## Cleanup
 
-To remote the Nginx application, run:
+To remove the Nginx application, run:
 
 ```sh
-kubectl delete -f my-nginx.yaml`
+kubectl delete deploy my-nginx
+kubectl delete svc my-nginx
+```
+
+To remove the EnvoyFilter resources, run:
+
+```sh
+kubectl delete envoyfilter update-envoy-metric
+kubectl delete envoyfilter new-envoy-metric
 ```
