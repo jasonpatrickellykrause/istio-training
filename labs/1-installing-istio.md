@@ -58,8 +58,8 @@ We can run `kubectl version` to check if the CLI is installed. You should see th
 
 ```bash
 $ kubectl version
-Client Version: version.Info{Major:"1", Minor:"19", GitVersion:"v1.19.2", GitCommit:"f5743093fd1c663cb0cbc89748f730662345d44d", GitTreeState:"clean", BuildDate:"2020-09-16T21:51:49Z", GoVersion:"go1.15.2", Compiler:"gc", Platform:"darwin/amd64"}
-Server Version: version.Info{Major:"1", Minor:"19", GitVersion:"v1.19.0", GitCommit:"e19964183377d0ec2052d1f1fa930c4d7575bd50", GitTreeState:"clean", BuildDate:"2020-08-26T14:23:04Z", GoVersion:"go1.15", Compiler:"gc", Platform:"linux/amd64"}
+Client Version: version.Info{Major:"1", Minor:"22", GitVersion:"v1.22.2", GitCommit:"8b5a19147530eaac9476b0ab82980b4088bbc1b2", GitTreeState:"clean", BuildDate:"2021-09-15T21:38:50Z", GoVersion:"go1.16.8", Compiler:"gc", Platform:"linux/amd64"}
+Server Version: version.Info{Major:"1", Minor:"20+", GitVersion:"v1.20.10-gke.1600", GitCommit:"ef8e9f64449d73f9824ff5838cea80e21ec6c127", GitTreeState:"clean", BuildDate:"2021-09-06T09:24:20Z", GoVersion:"go1.15.15b5", Compiler:"gc", Platform:"linux/amd64"}
 ```
 
 ## Using Google Cloud Platform
@@ -127,10 +127,10 @@ We can now run the version command to ensure GetMesh is successfully installed. 
 
 ```sh
 $ getmesh version
-getmesh version: 1.1.1
-active istioctl: 1.9.5-tetrate-v0
+getmesh version: 1.1.3
+active istioctl: 1.11.3-tetrate-v0
 no running Istio pods in "istio-system"
-1.9.5-tetrate-v0
+1.11.3-tetrate-v0
 ```
 
 The version command outputs the version of GetMesh, the version of active Istio CLI, and versions of Istio installed on the Kubernetes cluster.
@@ -161,11 +161,11 @@ We can run the version comand again (`getmesh version`). You’ll notice that th
 
 ```sh
 $ getmesh version
-getmesh version: 1.1.1
-active istioctl: 1.9.5-tetrate-v0
-client version: 1.9.5-tetrate-v0
-control plane version: 1.9.5-tetrate-v0
-data plane version: 1.9.5-tetrate-v0 (2 proxies)
+getmesh version: 1.1.3
+active istioctl: 1.11.3-tetrate-v0
+client version: 1.11.3-tetrate-v0
+control plane version: 1.11.3-tetrate-v0
+data plane version: 1.11.3-tetrate-v0 (2 proxies)
 ```
 
 To check the status of the installation, we can look at the status of the Pods in the `istio-system` namespace:
@@ -199,13 +199,12 @@ To check the namespace is labeled, run the command below. The `default` namespac
 
 ```bash
 $ kubectl get namespace -L istio-injection
-NAME              STATUS   AGE   ISTIO-INJECTION
-default           Active   32m   enabled
-istio-operator    Active   27m   disabled
-istio-system      Active   15m
-kube-node-lease   Active   32m
-kube-public       Active   32m
-kube-system       Active   32m
+NAME              STATUS   AGE     ISTIO-INJECTION
+default           Active   3m49s   enabled
+istio-system      Active   82s
+kube-node-lease   Active   3m51s
+kube-public       Active   3m51s
+kube-system       Active   3m51s
 ```
 
 We can now try creating a Deployment in the `default` namespace and observe the injected proxy. We will create a deployment called `my-nginx` with a single container using image `nginx`:
@@ -220,30 +219,28 @@ If we look at the Pods, you will notice there are two containers in the Pod:
 ```
 $ kubectl get po
 NAME                        READY   STATUS    RESTARTS   AGE
-my-nginx-6b74b79f57-hmvj8   2/2     Running   0          62s
+my-nginx-6b74b79f57-ks7p8   2/2     Running   0          62s
 ``` 
 
 Similarly, describing the Pod shows Kubernetes created both an `nginx` container and an `istio-proxy` container:
 
 ```
-$ kubectl describe po my-nginx-6b74b79f57-hmvj8
+$ kubectl describe po my-nginx-6b74b79f57-ks7p8 
 ...
 Events:
-  Type    Reason     Age   From               Message
-  ----    ------     ----  ----               -------
-  Normal  Scheduled  28s   default-scheduler  Successfully assigned default/my-nginx-9b596c8c4-2v5d7 to gke-fico-may-2021-1-009-default-pool-e46ed8ba-0sqm
-  Normal  Pulling    27s   kubelet            Pulling image "tetrate-docker-getmesh-docker.bintray.io/proxyv2:1.9.5-tetrate-v0"
-  Normal  Pulled     26s   kubelet            Successfully pulled image "tetrate-docker-getmesh-docker.bintray.io/proxyv2:1.9.5-tetrate-v0"
-  Normal  Created    26s   kubelet            Created container istio-init
-  Normal  Started    25s   kubelet            Started container istio-init
-  Normal  Pulling    25s   kubelet            Pulling image "nginx"
-  Normal  Pulled     20s   kubelet            Successfully pulled image "nginx"
-  Normal  Created    19s   kubelet            Created container nginx
-  Normal  Started    19s   kubelet            Started container nginx
-  Normal  Pulling    19s   kubelet            Pulling image "tetrate-docker-getmesh-docker.bintray.io/proxyv2:1.9.5-tetrate-v0"
-  Normal  Pulled     17s   kubelet            Successfully pulled image "tetrate-docker-getmesh-docker.bintray.io/proxyv2:1.9.5-tetrate-v0"
-  Normal  Created    17s   kubelet            Created container istio-proxy
-  Normal  Started    17s   kubelet            Started container istio-proxy
+  Type     Reason       Age   From               Message
+  ----     ------       ----  ----               -------
+  Normal   Scheduled    30s   default-scheduler  Successfully assigned default/my-nginx-6b74b79f57-ks7p8 to gke-cluster-1-default-pool-ab26b687-9nsr
+  Normal   Pulled       27s   kubelet            Container image "containers.istio.tetratelabs.com/proxyv2:1.11.3-tetrate-v0" already present on machine
+  Normal   Created      27s   kubelet            Created container istio-init
+  Normal   Started      27s   kubelet            Started container istio-init
+  Normal   Pulling      27s   kubelet            Pulling image "nginx"
+  Normal   Pulled       23s   kubelet            Successfully pulled image "nginx" in 3.89712405s
+  Normal   Created      22s   kubelet            Created container nginx
+  Normal   Started      22s   kubelet            Started container nginx
+  Normal   Pulled       22s   kubelet            Container image "containers.istio.tetratelabs.com/proxyv2:1.11.3-tetrate-v0" already present on machine
+  Normal   Created      22s   kubelet            Created container istio-proxy
+  Normal   Started      22s   kubelet            Started container istio-proxy
 ```
 
 To remove the deployment, run the delete command:
@@ -261,6 +258,8 @@ To completely uninstall Istio from the cluster, run the following command:
 getmesh istioctl x uninstall --purge
 ```
 
+Press `y` to proceed with uninstalling Istio.
+
 ## Installing Istio using IstioOperator
 
 To get started we'll initialize the default Istio operator first. The init command deploys the operator to the `istio-operator` image and it configures it to watch the `istio-system` namespace. That means we'll have to create the IstioOperator resouce in the `istio-system` namespace so it gets picked up by the operator.
@@ -274,12 +273,12 @@ getmesh istioctl operator init
 Istio operator is deployed to the `istio-operator` namespace:
 
 ```sh
-$ kubectl get po  -n istio-operator
+$ kubectl get po -n istio-operator
 NAME                              READY   STATUS    RESTARTS   AGE
-istio-operator-7c67896564-jbcpf   1/1     Running   0          99s
+istio-operator-54958d5898-mkrpf   1/1     Running   0          99s
 ```
 
-Since we're using Istio 1.9, we'll have to manually create the `istio-system` namespace. With newer versions of Istio, namespace is created automatically by the operator.
+>Note: If using earlier versions of Istio (e.g. Istio 1.9), you'll have to manually create the `istio-system` namespace. With latest versions of Istio, namespace is created automatically when operator is initialized. 
 
 Next, we can create the IstioOperator resource to install Istio. We'll use the demo profile - that profile includes the `istiod`, an `istio-ingressgateway` and an egress gateway:
 
@@ -325,9 +324,11 @@ spec:
 
 Save the above YAML to `iop-egress.yaml` and apply it to the cluster using `kubectl apply -f iop-egress.yaml`.
 
-If you list the IstioOperator resource you'll notice the status has changed to `RECONCILING` and once the egress is removed, the status changes back to HEALTHY.
+If we list the IstioOperator resource you'll notice the status has changed to `RECONCILING` and once the egress is removed, the status changes back to HEALTHY. We can also look at the pods in the `istio-system` namespace to see that the egress gateway pod was removed.
 
-Another option for updating the Istio installation is to create separate IstioOperator resources. That way, you can have a resource for the base installation and separately apply different operators using an empty installation profile. For example, here's how you could create a separate IstioOperator resource that only deploys an internal ingress gateway:
+Another option for updating the Istio installation is to create separate IstioOperator resources. That way, you can have a resource for the base installation and separately apply different operators using an empty installation profile.
+
+For example, here's how you could create a separate IstioOperator resource that only deploys an internal ingress gateway:
 
 ```yaml
 apiVersion: install.istio.io/v1alpha1
