@@ -233,7 +233,7 @@ If we open the `GATEWAY_URL` we should still get back the response from the Cust
 We can use the [ModHeader](https://chrome.google.com/webstore/detail/modheader/idgpnmonknjnojddfkpgkljpfnnfcklj?hl=en) extension to modify the headers from the browser. Alternatively, we can use cURL and add the header to the request like this:
 
 ```bash
-$ curl -H "user: debug" http://GATEWAY_URL/
+$ curl -H "user: debug" http://$GATEWAY_URL/
 ...
 <th class="px-4 py-2">CITY</th>
 <th class="px-4 py-2">NAME</th>
