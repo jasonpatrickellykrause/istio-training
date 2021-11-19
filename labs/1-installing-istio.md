@@ -363,7 +363,7 @@ kubectl delete iop demo-installation -n istio-system
 Once Istio is deleted, you have to also remove the IstioOperator:
 
 ```sh
-istioctl operator remove
+getmesh istioctl operator remove
 ```
 
 Finally, remove the `istio-system` namespace: `kubectl delete ns istio-system`.
