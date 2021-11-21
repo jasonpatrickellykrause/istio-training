@@ -157,7 +157,7 @@ Once the installation completes you will see the following line in the output:
 ✔ Istio is installed and verified successfully
 ```
 
-We can run the version comand again (`getmesh version`). You’ll notice that the output shows the control plane and data plane versions installed on the cluster.
+We can run the version command again (`getmesh version`). You’ll notice that the output shows the control plane and data plane versions installed on the cluster.
 
 ```sh
 $ getmesh version
@@ -174,7 +174,7 @@ To check the status of the installation, we can look at the status of the Pods i
 $ kubectl get po -n istio-system
 NAME                                    READY   STATUS    RESTARTS   AGE
 istio-egressgateway-6db9994577-sn95p    1/1     Running   0          79s
-istio-ingressgateway-58649bfdf4-cs4fk   1/1     Running   0          79s
+istio-egressgateway-58649bfdf4-cs4fk   1/1     Running   0          79s
 istiod-dd4b7db5-nxrjv                   1/1     Running   0          111s
 ```
 
@@ -263,9 +263,9 @@ getmesh istioctl x uninstall --purge
 
 ## Installing Istio using IstioOperator
 
-To get started we'll initialize the default Istio operator first. The init command deploys the operator to the `istio-operator` image and it configures it to watch the `istio-system` namespace. That means we'll have to create the IstioOperator resouce in the `istio-system` namespace so it gets picked up by the operator.
+To get started we'll initialize the default Istio operator first. The init command deploys the operator to the `istio-operator` image and it configures it to watch the `istio-system` namespace. That means we'll have to create the IstioOperator resource in the `istio-system` namespace so it gets picked up by the operator.
 
-Let's initalize the operator first:
+Let's initialize the operator first:
 
 ```sh
 getmesh istioctl operator init

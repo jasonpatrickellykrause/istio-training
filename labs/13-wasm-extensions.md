@@ -240,7 +240,7 @@ example body
 
 ## Reading values from configuration
 
-Hardcoding values like that in code is never a good idea. Let's see how we can read the additional headers.
+Hardcoded values like this in code are never a good idea. Let's see how we can read the additional headers.
 
 1. Add the `additionalHeaders` and `contextID` to the `pluginContext` struct:
 
@@ -309,7 +309,7 @@ func (ctx *pluginContext) NewHttpContext(contextID uint32) types.HttpContext {
 }
 ```
 
-Finally, in order to set the headers we modiy the `OnHttpResponseHeaders` function, iterate through the `additionalHeaders` map and call the `AddHttpResponseHeader` for each item:
+Finally, in order to set the headers we modify the `OnHttpResponseHeaders` function, iterate through the `additionalHeaders` map and call the `AddHttpResponseHeader` for each item:
 
 ```go
 func (ctx *httpHeaders) OnHttpResponseHeaders(numHeaders int, endOfStream bool) types.Action {

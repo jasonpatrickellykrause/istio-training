@@ -56,7 +56,7 @@ Save the above YAML `httpbin.yaml` file. We'll use Istio CLI to manually inject 
 getmesh istioctl kube-inject -f httpbin.yaml | kubectl apply -f -
 ```
 
-When the deployment is created we can edit it and configure the `istio-proxy` container to run as a priviledged container. This will allow us to look run the iptables command with root privileges.
+When the deployment is created we can edit it and configure the `istio-proxy` container to run as a privileged container. This will allow us to look run the iptables command with root privileges.
 
 Let's open the deployment YAML in the editor using the `kubectl edit deployment httpbin` command. This will open the vim editor with the deployment YAML.
 

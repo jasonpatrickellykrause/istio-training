@@ -137,7 +137,7 @@ istio_requests_total{app="my-nginx",connection_security_policy="none",destinatio
 
 ## Grafana Dashboards
 
-[Grafana](https://grafana.com) is an open platform for analytics and monitoring. Grafana can connect to various data sources and visualizes the data using graphs, tables, heatmaps, etc. With a powerful query language, you can customize the existing dashboard and create more advanced visualizations.
+[Grafana](https://grafana.com) is an open platform for analytics and monitoring. Grafana can connect to various data sources and visualizes the data using graphs, tables, heat maps, etc. With a powerful query language, you can customize the existing dashboard and create more advanced visualizations.
 
 With Grafana, we can monitor the health of Istio installation and applications running in the service mesh.
 
@@ -202,7 +202,7 @@ We can get information about the request volume, success rate, durations, and de
 
 1. Istio Wasm Extension Dashboard
 
-This dashboards shows the data about Wasm Vvirtual machines, proxy resource usage and information caching and fetching the remote Wasm modules.
+This dashboards shows the data about Wasm virtual machines, proxy resource usage and information caching and fetching the remote Wasm modules.
 
 1. Istio Workload Dashboard
 
@@ -267,8 +267,7 @@ To install Kiali, use the `kiali.yaml` file:
 
 ```shell
 $ kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.9/samples/addons/kiali.yaml
-customresourcedefinition.apiextensions.k8s.io/monitoringdashboards.monito
-ring.kiali.io created
+customresourcedefinition.apiextensions.k8s.io/monitoringdashboards.monitoring.kiali.io created
 serviceaccount/kiali created
 configmap/kiali created
 clusterrole.rbac.authorization.k8s.io/kiali-viewer created
@@ -476,7 +475,7 @@ spec:
 
 Save the above YAML to `add-dimension-ef.yaml` and deploy it using `kubectl apply -f add-dimension-ef.yaml`.
 
-Because the `app_containers` is not in the list of defauslt stat tags, we need to include it. The way to do that is by either updating the IstioOperator and doing it mesh-wide or adding an annotation to the Pod spec.
+Because the `app_containers` is not in the list of default stat tags, we need to include it. The way to do that is by either updating the IstioOperator and doing it mesh-wide or adding an annotation to the Pod spec.
 
 Let's edit the my-nginx deployment and add the following annotation:
 

@@ -180,7 +180,7 @@ $ getmesh istioctl proxy-status | grep $(kubectl get pod -l app=web-frontend -o 
 Notice that the proxy version is set to the latest Istio version that we deployed. Another way to check this is to list the pods with their labels and check which ones have the `istio.io/rev=1-9-5` label set:
 
 ```sh
-$ kubect get po --show-labels
+$ kubectl get po --show-labels
 NAME                            READY   STATUS    RESTARTS   AGE    LABELS
 customers-v1-5468b9c748-2gn59   2/2     Running   0          2m3s   app=customers,istio.io/rev=1-9-5,pod-template-hash=5468b9c748,security.istio.io/tlsMode=istio,service.istio.io/canonical-name=customers,service.istio.io/canonical-revision=v1,version=v1
 web-frontend-5568545fd9-6bpkq   2/2     Running   0          2m3s   app=web-frontend,istio.io/rev=1-9-5,pod-template-hash=5568545fd9,security.istio.io/tlsMode=istio,service.istio.io/canonical-name=web-frontend,service.istio.io/canonical-revision=v1,version=v1
