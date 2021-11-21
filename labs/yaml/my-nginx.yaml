@@ -6,8 +6,8 @@ metadata:
     app: my-nginx
 spec:
   ports:
-  - port: 80
-    protocol: TCP
+    - port: 80
+      protocol: TCP
   selector:
     app: my-nginx
   type: LoadBalancer
@@ -27,7 +27,7 @@ spec:
         app: my-nginx
     spec:
       containers:
-      - name: nginx
-        image: nginx
-        ports:
-        - containerPort: 80
+        - name: nginx
+          image: nginx
+          ports:
+            - containerPort: 80

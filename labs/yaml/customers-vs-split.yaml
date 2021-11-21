@@ -4,21 +4,21 @@ metadata:
   name: customers
 spec:
   hosts:
-    - 'customers.default.svc.cluster.local'
+    - "customers.default.svc.cluster.local"
   http:
-  - match:
-    - headers:
-        user:
-          exact: debug
-    route:
-    - destination:
-        host: customers.default.svc.cluster.local
-        port:
-          number: 80
-        subset: v2
-  - route:
-      - destination:
-          host: customers.default.svc.cluster.local
-          port:
-            number: 80
-          subset: v1
+    - match:
+        - headers:
+            user:
+              exact: debug
+      route:
+        - destination:
+            host: customers.default.svc.cluster.local
+            port:
+              number: 80
+            subset: v2
+    - route:
+        - destination:
+            host: customers.default.svc.cluster.local
+            port:
+              number: 80
+            subset: v1

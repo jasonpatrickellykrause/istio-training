@@ -29,7 +29,7 @@ spec:
             - containerPort: 8080
           env:
             - name: CUSTOMER_SERVICE_URL
-              value: 'http://customers.default.svc.cluster.local'
+              value: "http://customers.default.svc.cluster.local"
           resources:
             limits:
               memory: 50Mi
@@ -55,7 +55,7 @@ metadata:
   name: web-frontend
 spec:
   hosts:
-    - 'frontend.example.io'
+    - "frontend.example.io"
   gateways:
     - public-gateway
   http:
@@ -78,7 +78,7 @@ spec:
         name: http
         protocol: HTTP
       hosts:
-        - 'frontend.example.io'
+        - "frontend.example.io"
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -136,7 +136,7 @@ metadata:
   name: customers
 spec:
   hosts:
-    - 'customers.default.svc.cluster.local'
+    - "customers.default.svc.cluster.local"
   http:
     - route:
         - destination:

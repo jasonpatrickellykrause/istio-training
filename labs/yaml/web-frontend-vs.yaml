@@ -4,7 +4,7 @@ metadata:
   name: web-frontend
 spec:
   hosts:
-    - '*'
+    - "*"
   gateways:
     - gateway
   http:
