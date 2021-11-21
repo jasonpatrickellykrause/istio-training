@@ -43,12 +43,15 @@ Make sure to replace the `--driver=virtualbox` with the name of the Hypervisor y
 To check if the cluster is running, we can use the Kubernetes CLI and run the `kubectl get nodes` command:
 
 ```shell
-$ kubectl get nodes
+kubectl get nodes
+```
+
+```console
 NAME       STATUS   ROLES    AGE    VERSION
 minikube   Ready    master   151m   v1.19.0
 ```
 
->Note: if you installed Minikube using [Brew package manager](https://brew.sh), you also have Kubernetes CLI installed.
+> Note: if you installed Minikube using [Brew package manager](https://brew.sh), you also have Kubernetes CLI installed.
 
 ### Kubernetes CLI
 
@@ -58,6 +61,9 @@ We can run `kubectl version` to check if the CLI is installed. You should see th
 
 ```shell
 $ kubectl version
+```
+
+```console
 Client Version: version.Info{Major:"1", Minor:"19", GitVersion:"v1.19.2", GitCommit:"f5743093fd1c663cb0cbc89748f730662345d44d", GitTreeState:"clean", BuildDate:"2020-09-16T21:51:49Z", GoVersion:"go1.15.2", Compiler:"gc", Platform:"darwin/amd64"}
 Server Version: version.Info{Major:"1", Minor:"19", GitVersion:"v1.19.0", GitCommit:"e19964183377d0ec2052d1f1fa930c4d7575bd50", GitTreeState:"clean", BuildDate:"2020-08-26T14:23:04Z", GoVersion:"go1.15", Compiler:"gc", Platform:"linux/amd64"}
 ```
@@ -106,6 +112,9 @@ To check if you're successfully connected to the cluster, you can run `kubectl g
 
 ```shell
 user@cloudshell:~$ kubectl get nodes
+```
+
+```console
 NAME                                                 STATUS   ROLES    AGE   VERSION
 project-name-default-pool-e46ed8ba-0sqm   Ready    <none>   23m   v1.18.17-gke.100
 project-name-default-pool-e46ed8ba-vkdk   Ready    <none>   23m   v1.18.17-gke.100
@@ -131,6 +140,9 @@ getmesh version
 
 ``` console
 getmesh version: 1.1.1
+```
+
+```console
 active istioctl: 1.9.5-tetrate-v0
 no running Istio pods in "istio-system"
 1.9.5-tetrate-v0
