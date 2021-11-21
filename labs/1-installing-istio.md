@@ -140,9 +140,6 @@ getmesh version
 
 ``` console
 getmesh version: 1.1.1
-```
-
-```console
 active istioctl: 1.9.5-tetrate-v0
 no running Istio pods in "istio-system"
 1.9.5-tetrate-v0
