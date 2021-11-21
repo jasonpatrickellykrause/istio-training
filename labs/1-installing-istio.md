@@ -29,16 +29,16 @@ minikube start --memory=16384 --cpus=4 --driver=virtualbox
 
 Make sure to replace the `--driver=virtualbox` with the name of the Hypervisor you're using. See the table below for available options.
 
-| Flag name | More information |
-| --- | --- |
-| `hyperkit` | [HyperKit](https://github.com/moby/hyperkit) |
-| `hyperv` | [Hyper-V](https://docs.microsoft.com/en-us/virtualization/hyper-v-on-windows/) |
-| `kvm2` | [KVM](https://www.linux-kvm.org/page/Main_Page) |
-|`docker` | [Docker](https://hub.docker.com/search?q=&type=edition&offering=community&sort=updated_at&order=desc) |
-| `podman` | [Podman](https://podman.io/getting-started/installation.html)
-| `parallels` | [Parallels](https://www.parallels.com/) |
-| `virtualbox` | [VirtualBox](https://www.virtualbox.org/) |
-| `vmware` | [VMware Fusion](https://www.vmware.com/products/fusion.html) |
+| Flag name    | More information                                                                                      |
+| ------------ | ----------------------------------------------------------------------------------------------------- |
+| `hyperkit`   | [HyperKit](https://github.com/moby/hyperkit)                                                          |
+| `hyperv`     | [Hyper-V](https://docs.microsoft.com/en-us/virtualization/hyper-v-on-windows/)                        |
+| `kvm2`       | [KVM](https://www.linux-kvm.org/page/Main_Page)                                                       |
+| `docker`     | [Docker](https://hub.docker.com/search?q=&type=edition&offering=community&sort=updated_at&order=desc) |
+| `podman`     | [Podman](https://podman.io/getting-started/installation.html)                                         |
+| `parallels`  | [Parallels](https://www.parallels.com/)                                                               |
+| `virtualbox` | [VirtualBox](https://www.virtualbox.org/)                                                             |
+| `vmware`     | [VMware Fusion](https://www.vmware.com/products/fusion.html)                                          |
 
 To check if the cluster is running, we can use the Kubernetes CLI and run the `kubectl get nodes` command:
 
@@ -104,7 +104,7 @@ You will also be prompted to authorize cloud shell - you can safely click the Au
 
 To check if you're successfully connected to the cluster, you can run `kubectl get nodes` and you should see the output similar to this one:
 
-```sh
+```shell
 user@cloudshell:~$ kubectl get nodes
 NAME                                                 STATUS   ROLES    AGE   VERSION
 project-name-default-pool-e46ed8ba-0sqm   Ready    <none>   23m   v1.18.17-gke.100
@@ -117,7 +117,7 @@ user@cloudshell:~$
 
 The first step is to download GetMesh CLI. You can install GetMesh on macOS and Linux platforms. We can use the following command to download the latest version of GetMesh and certified Istio:
 
-```sh
+```shell
 curl -sL https://istio.tetratelabs.io/getmesh/install.sh | bash
 ```
 
@@ -125,8 +125,11 @@ After installation completes, open a new tab terminal (click the + button in the
 
 We can now run the version command to ensure GetMesh is successfully installed. For example:
 
-```sh
-$ getmesh version
+```shell
+getmesh version
+```
+
+``` console
 getmesh version: 1.1.1
 active istioctl: 1.9.5-tetrate-v0
 no running Istio pods in "istio-system"
@@ -145,7 +148,7 @@ We can also start with the `minimal` component and individually install other fe
 
 To install the demo profile of Istio on a currently active Kubernetes cluster, we can use the `getmesh istioctl` command like this:
 
-```sh
+```shell
 getmesh istioctl install --set profile=demo
 ```
 
@@ -153,14 +156,17 @@ GetMesh will check the cluster to make sure it is ready for Istio installation. 
 
 Once the installation completes you will see the following line in the output:
 
-```sh
+```console
 ✔ Istio is installed and verified successfully
 ```
 
 We can run the version command again (`getmesh version`). You’ll notice that the output shows the control plane and data plane versions installed on the cluster.
 
-```sh
-$ getmesh version
+```shell
+getmesh version
+```
+
+```console
 getmesh version: 1.1.1
 active istioctl: 1.9.5-tetrate-v0
 client version: 1.9.5-tetrate-v0
@@ -171,7 +177,10 @@ data plane version: 1.9.5-tetrate-v0 (2 proxies)
 To check the status of the installation, we can look at the status of the Pods in the `istio-system` namespace:
 
 ```shell
-$ kubectl get po -n istio-system
+kubectl get po -n istio-system
+```
+
+```console
 NAME                                    READY   STATUS    RESTARTS   AGE
 istio-egressgateway-6db9994577-sn95p    1/1     Running   0          79s
 istio-egressgateway-58649bfdf4-cs4fk   1/1     Running   0          79s
@@ -191,14 +200,20 @@ However, we can also enable automatic sidecar injection on any Kubernetes namesp
 Let's enable automatic sidecar injection on the `default` namespace by adding a label:
 
 ```shell
-$ kubectl label namespace default istio-injection=enabled
+kubectl label namespace default istio-injection=enabled
+```
+
+```console
 namespace/default labeled
 ```
 
 To check the namespace is labeled, run the command below. The `default` namespace should be the only one with the value `enabled`.
 
 ```shell
-$ kubectl get namespace -L istio-injection
+kubectl get namespace -L istio-injection
+```
+
+```console
 NAME              STATUS   AGE   ISTIO-INJECTION
 default           Active   32m   enabled
 istio-operator    Active   27m   disabled
@@ -211,14 +226,20 @@ kube-system       Active   32m
 We can now try creating a Deployment in the `default` namespace and observe the injected proxy. We will create a deployment called `my-nginx` with a single container using image `nginx`:
 
 ```shell
-$ kubectl create deploy my-nginx --image=nginx
+kubectl create deploy my-nginx --image=nginx
+```
+
+```console
 deployment.apps/my-nginx created
 ```
 
 If we look at the Pods, you will notice there are two containers in the Pod:
 
 ```shell
-$ kubectl get po
+kubectl get po
+```
+
+```console
 NAME                        READY   STATUS    RESTARTS   AGE
 my-nginx-6b74b79f57-hmvj8   2/2     Running   0          62s
 ```
@@ -226,7 +247,10 @@ my-nginx-6b74b79f57-hmvj8   2/2     Running   0          62s
 Similarly, describing the Pod shows Kubernetes created both an `nginx` container and an `istio-proxy` container:
 
 ```shell
-$ kubectl describe po my-nginx-6b74b79f57-hmvj8
+kubectl describe po my-nginx-6b74b79f57-hmvj8
+```
+
+```console
 ...
 Events:
   Type    Reason     Age   From               Message
@@ -249,7 +273,10 @@ Events:
 To remove the deployment, run the delete command:
 
 ```shell
-$ kubectl delete deployment my-nginx
+kubectl delete deployment my-nginx
+```
+
+```console
 deployment.apps "my-nginx" deleted
 ```
 
@@ -257,7 +284,7 @@ deployment.apps "my-nginx" deleted
 
 To completely uninstall Istio from the cluster, run the following command:
 
-```sh
+```shell
 getmesh istioctl x uninstall --purge
 ```
 
@@ -267,14 +294,17 @@ To get started we'll initialize the default Istio operator first. The init comma
 
 Let's initialize the operator first:
 
-```sh
+```shell
 getmesh istioctl operator init
 ```
 
 Istio operator is deployed to the `istio-operator` namespace:
 
-```sh
-$ kubectl get po  -n istio-operator
+```shell
+kubectl get po  -n istio-operator
+```
+
+```console
 NAME                              READY   STATUS    RESTARTS   AGE
 istio-operator-7c67896564-jbcpf   1/1     Running   0          99s
 ```
@@ -297,13 +327,16 @@ Save the above to `demo-installation.yaml` and create the resource with `kubectl
 
 We can check the status of the installation by listing the Istio operator resource. The installation is completed once the STATUS column shows HEALTHY:
 
-```sh
-$ kubectl get iop -A
+```shell
+kubectl get iop -A
+```
+
+```console
 NAMESPACE      NAME                   REVISION   STATUS        AGE
 istio-system   demo-installation              HEALTHY       67s
 ```
 
->Note: you can also look at the more detailed installation logs from the Istio operator pod.
+> Note: you can also look at the more detailed installation logs from the Istio operator pod.
 
 ### Updating the operator
 
@@ -355,13 +388,13 @@ Note that you'll be using the same cluster throughout the workshop, so you don't
 
 To delete Istio we have to delete the IstioOperator resource:
 
-```sh
+```shell
 kubectl delete iop demo-installation -n istio-system
 ```
 
 Once Istio is deleted, you have to also remove the IstioOperator:
 
-```sh
+```shell
 istioctl operator remove
 ```
 

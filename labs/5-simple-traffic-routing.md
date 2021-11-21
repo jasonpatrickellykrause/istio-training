@@ -121,7 +121,10 @@ Save the above to `customers-v1.yaml` and create the deployment and service usin
 We should have both applications deployed and running:
 
 ```shell
-$ kubectl get po
+kubectl get po
+```
+
+```console
 NAME                            READY   STATUS    RESTARTS   AGE
 customers-v1-7857944975-5lxc8   2/2     Running   0          36s
 web-frontend-659f65f49-jz58r    2/2     Running   0          3m38s
@@ -153,7 +156,7 @@ We can now open the `GATEWAY_URL` in the browser, and get to the Web Frontend th
 
 You can set the `GATEWAY_URL` variable like this:
 
-```sh
+```shelll
 export GATEWAY_URL=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 ```
 

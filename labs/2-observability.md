@@ -52,8 +52,11 @@ We have also deployed a my-nginx Kubernetes LoadBalancer service - this will all
 
 Now we can run `kubectl get services` and get the external IP address of the `my-nginx` service. Note that the load balancer creation might take a couple of minutes. During that time the value in the `EXTERNAL-IP` column will be `<pending>`.
 
-```sh
-$ kubectl get svc
+```shell
+kubectl get svc
+```
+
+```console
 NAME         TYPE           CLUSTER-IP   EXTERNAL-IP      PORT(S)        AGE
 kubernetes   ClusterIP      10.48.0.1    <none>           443/TCP        73m
 my-nginx     LoadBalancer   10.48.0.94   [IP HERE]   80:31191/TCP   4m6s
@@ -61,14 +64,17 @@ my-nginx     LoadBalancer   10.48.0.94   [IP HERE]   80:31191/TCP   4m6s
 
 Once the IP address is available, let’s store it as an environment variable so we can use it throughout this lab:
 
-```sh
+```shell
 export NGINX_IP=$(kubectl get service my-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 ```
 
 You can now run curl against the above IP and you should get back the default Nginx page:
 
-```sh
-$ curl $NGINX_IP
+```shell
+curl $NGINX_IP
+```
+
+```console
 <!DOCTYPE html>
 <html>
 <head>
@@ -106,8 +112,11 @@ Prometheus is an open-source monitoring system and time series database. Istio u
 
 To install Prometheus we can use the sample installation:
 
-```sh
-$ kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.9/samples/addons/prometheus.yaml
+```shell
+kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.9/samples/addons/prometheus.yaml
+```
+
+```console
 serviceaccount/prometheus created
 configmap/prometheus created
 clusterrole.rbac.authorization.k8s.io/prometheus created
@@ -118,8 +127,11 @@ deployment.apps/prometheus created
 
 Once the Prometheus pod starts, we can use the `dashboard` command to open the Prometheus Dashboard:
 
-```sh
-$ getmesh istioctl dashboard prometheus
+```shell
+getmesh istioctl dashboard prometheus
+```
+
+```console
 http://localhost:9090
 ```
 
@@ -131,7 +143,7 @@ Open another terminal tab (click the **+** button) and let's make a couple of re
 
 Here's an example element from the Prometheus UI:
 
-```sh
+```plaintext
 istio_requests_total{app="my-nginx",connection_security_policy="none",destination_app="my-nginx",destination_canonical_revision="latest",destination_canonical_service="my-nginx",destination_cluster="Kubernetes",destination_principal="unknown",destination_service="my-nginx.default.svc.cluster.local",destination_service_name="my-nginx",destination_service_namespace="default",destination_version="unknown",destination_workload="my-nginx",destination_workload_namespace="default",instance="10.44.2.9:15020",istio_io_rev="default",job="kubernetes-pods",kubernetes_namespace="default",kubernetes_pod_name="my-nginx-9b596c8c4-kdlpr",pod_template_hash="9b596c8c4",reporter="destination",request_protocol="http",response_code="200",response_flags="-",security_istio_io_tlsMode="istio",service_istio_io_canonical_name="my-nginx",service_istio_io_canonical_revision="latest",source_app="unknown",source_canonical_revision="latest",source_canonical_service="unknown",source_cluster="unknown",source_principal="unknown",source_version="unknown",source_workload="unknown",source_workload_namespace="unknown"} 8
 ```
 
@@ -148,7 +160,10 @@ Ensure you deploy the Prometheus addon, before deploying Grafana, as Grafana use
 Run the following command to deploy Grafana with pre-configured dashboards:
 
 ```shell
-$ kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.9/samples/addons/grafana.yaml
+kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.9/samples/addons/grafana.yaml
+```
+
+```console
 serviceaccount/grafana created
 configmap/grafana created
 service/grafana created
@@ -157,12 +172,15 @@ configmap/istio-grafana-dashboards created
 configmap/istio-services-grafana-dashboards created
 ```
 
->This Grafana installation is not intended for running in production, as it's not tuned for performance or security.
+> This Grafana installation is not intended for running in production, as it's not tuned for performance or security.
 
 Kubernetes deploys Grafana in the `istio-system` namespace. To access Grafana, we can use the `dashboard` command:
 
 ```shell
-$ getmesh istioctl dashboard grafana
+getmesh istioctl dashboard grafana
+```
+
+```console
 http://localhost:3000
 ```
 
@@ -220,7 +238,7 @@ Istio relies on B3 trace headers (headers starting with `x-b3`) and the Envoy-ge
 
 Here are the specific header names we need to propagate in our applications with each outgoing request:
 
-```text
+```plaintext
 x-request-id
 x-b3-traceid
 x-b3-spanid
@@ -230,7 +248,7 @@ x-b3-flags
 b3
 ```
 
->If you're using Lightstep, you also need to forward the header called `x-ot-span-context`.
+> If you're using Lightstep, you also need to forward the header called `x-ot-span-context`.
 
 The most common way to propagate the headers is to copy them from the incoming request and include them in all outgoing requests made from your applications.
 
@@ -239,7 +257,10 @@ Traces you get with Istio service mesh are only captured at the service boundari
 To install Zipkin, we can use the `zipkin.yaml` file:
 
 ```shell
-$ kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.9/samples/addons/extras/zipkin.yaml
+kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.9/samples/addons/extras/zipkin.yaml
+```
+
+```console
 deployment.apps/zipkin created
 service/tracing created
 service/zipkin created
@@ -266,7 +287,10 @@ Since we only have 1 service running (Nginx), you won't see a lot of details. La
 To install Kiali, use the `kiali.yaml` file:
 
 ```shell
-$ kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.9/samples/addons/kiali.yaml
+kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.9/samples/addons/kiali.yaml
+```
+
+```console
 customresourcedefinition.apiextensions.k8s.io/monitoringdashboards.monitoring.kiali.io created
 serviceaccount/kiali created
 configmap/kiali created
@@ -297,8 +321,11 @@ Kiali provides actions to create, update, and delete Istio configuration, driven
 
 Let's look at the metrics that are being collected by the mesh. We'll use the Nginx deployment we've created earlier. Use curl to send a couple of requests to the Nginx deployment to generate some data for the metrics:
 
-```sh
-$ curl $NGINX_IP
+```shell
+curl $NGINX_IP
+```
+
+```console
 <!DOCTYPE html>
 <html>
 <head>
@@ -308,8 +335,11 @@ $ curl $NGINX_IP
 
 Next, we can use the `/stats/prometheus` endpoint on the `istio-proxy` container and look at the `istio_requests_total` metric:
 
-```sh
-$ kubectl exec -it deploy/my-nginx -c istio-proxy -- curl localhost:15000/stats/prometheus | grep istio_requests_total
+```shell
+kubectl exec -it deploy/my-nginx -c istio-proxy -- curl localhost:15000/stats/prometheus | grep istio_requests_total
+```
+
+```console
 # TYPE istio_requests_total counter
 istio_requests_total{response_code="200",reporter="destination",source_workload="unknown",source_workload_namespace="unknown",source_principal="unknown",source_app="unknown",source_version="unknown",source_cluster="unknown",destination_workload="my-nginx",destination_workload_namespace="default",destination_principal="unknown",destination_app="my-nginx",destination_version="unknown",destination_service="my-nginx.default.svc.cluster.local",destination_service_name="my-nginx",destination_service_namespace="default",destination_cluster="Kubernetes",request_protocol="http",response_flags="-",grpc_response_status="",connection_security_policy="none",source_canonical_service="unknown",destination_canonical_service="my-nginx",source_canonical_revision="latest",destination_canonical_revision="latest"} 9
 ```
@@ -479,7 +509,7 @@ Because the `app_containers` is not in the list of default stat tags, we need to
 
 Let's edit the my-nginx deployment and add the following annotation:
 
-```shell
+```yaml
 ...
 template:
   metadata:
@@ -490,7 +520,10 @@ template:
 Save the changes and wait for the Pod to be restarted. Once the Pod restarts, make a couple of requests to the $NGINX_IP and then look at the metrics:
 
 ```shell
-$ kubectl exec -it deploy/my-nginx -c istio-proxy -- curl localhost:15000/stats/prometheus | grep app_containers
+kubectl exec -it deploy/my-nginx -c istio-proxy -- curl localhost:15000/stats/prometheus | grep app_containers
+```
+
+```console
 istio_requests_total{response_code="200",reporter="destination",source_workload="unknown",source_workload_namespace="unknown",source_principal="unknown",source_app="unknown",source_version="unknown",source_cluster="unknown",destination_workload="my-nginx",destination_workload_namespace="default",destination_principal="unknown",destination_app="my-nginx",destination_version="unknown",destination_service="my-nginx.default.svc.cluster.local",destination_service_name="my-nginx",destination_service_namespace="default",destination_cluster="Kubernetes",request_protocol="http",response_flags="-",grpc_response_status="",connection_security_policy="none",source_canonical_service="unknown",destination_canonical_service="my-nginx",source_canonical_revision="latest",destination_canonical_revision="latest",app_containers="nginx"} 13
 ```
 
@@ -565,7 +598,10 @@ sidecar.istio.io/statsInclusionPrefixes: istio_simple_counter
 Note that we have to prefix the metric name with `istio`, because that's the stat prefix defined in the Envoy filter. Save the deployment, make a couple of requests to $NGINX_IP and then check the metrics:
 
 ```shell
-$ kubectl exec -it deploy/my-nginx -c istio-proxy -- curl localhost:15000/stats/prometheus | grep simple
+kubectl exec -it deploy/my-nginx -c istio-proxy -- curl localhost:15000/stats/prometheus | grep simple
+```
+
+```console
 # TYPE istio_simple_counter counter
 istio_simple_counter{} 4
 ```
@@ -574,6 +610,6 @@ istio_simple_counter{} 4
 
 To remote the Nginx application, run:
 
-```sh
+```shell
 kubectl delete -f my-nginx.yaml`
 ```

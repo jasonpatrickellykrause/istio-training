@@ -26,7 +26,10 @@ Save the above YAML to `gateway.yaml` and deploy the Gateway using `kubectl appl
 Next, we will create the Web Frontend and the Customer service deployments and related Kubernetes services. We will disable the automatic sidecar injection in the `default` namespace before we start deploying, so the proxy doesn't get injected into the Web frontend deployment. Before we deploy the Customer service, we will enable the injection again.
 
 ```shell
-$ kubectl label namespace default istio-injection-
+kubectl label namespace default istio-injection-
+```
+
+```console
 namespace/default labeled
 ```
 
@@ -94,7 +97,10 @@ spec:
 Save the above YAML to `web-frontend.yaml` and create the deployment and service using `kubectl apply -f web-frontend.yaml`. If we look at the running Pods, we should see one Pod with a single container running, indicated by the `1/1` in the `READY` column:
 
 ```shell
-$ kubectl get po
+kubectl get po
+```
+
+```console
 NAME                           READY   STATUS    RESTARTS   AGE
 web-frontend-659f65f49-cbhvl   1/1     Running   0          7m31s
 ```
@@ -102,7 +108,10 @@ web-frontend-659f65f49-cbhvl   1/1     Running   0          7m31s
 Let's enable the automatic injection:
 
 ```shell
-$ kubectl label namespace default istio-injection=enabled
+kubectl label namespace default istio-injection=enabled
+```
+
+```console
 namespace/default labeled
 ```
 
@@ -169,7 +178,10 @@ Save the above to `customers-v1.yaml` and create the deployment and service usin
 We should have both applications deployed and running - the customers service will have two containers, and the web frontend service will have one:
 
 ```shell
-$ kubectl get po
+kubectl get po
+```
+
+```console
 NAME                            READY   STATUS    RESTARTS   AGE
 customers-v1-7857944975-qrqsz   2/2     Running   0          4m1s
 web-frontend-659f65f49-cbhvl    1/1     Running   0          13m
@@ -179,7 +191,7 @@ If we try and access the web page from the `GATEWAY_URL`, we will get the web pa
 
 You can set the `GATEWAY_URL` variable like this:
 
-```sh
+```shell
 export GATEWAY_URL=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 ```
 
@@ -214,7 +226,10 @@ Save the above to `vs-customers-gateway.yaml` and update the VirtualService usin
 We can now specify the Host header and we'll be able to send the requests through the ingress gateway (`GATEWAY_URL`) to the customers service:
 
 ```shell
-$ curl -H "Host: customers.default.svc.cluster.local" http://$GATEWAY_URL;
+curl -H "Host: customers.default.svc.cluster.local" http://$GATEWAY_URL;
+```
+
+```console
 [{"name":"Jewel Schaefer"},{"name":"Raleigh Larson"},{"name":"Eloise Senger"},{"name":"Moshe Zieme"},{"name":"Filiberto Lubowitz"},{"name":"Ms.Kadin Kling"},{"name":"Jennyfer Bergstrom"},{"name":"Candelario Rutherford"},{"name":"Kenyatta Flatley"},{"name":"Gianni Pouros"}]
 ```
 

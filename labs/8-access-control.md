@@ -174,7 +174,7 @@ Save the above to `deny-all.yaml` and create the policy using `kubectl apply -f 
 
 If we try to access `GATEWAY_URL` we will get back the following response:
 
-```shell
+```console
 RBAC: access denied
 ```
 
@@ -258,7 +258,7 @@ As soon as the policy is created, we will see the web frontend working again - i
 
 You can set the `GATEWAY_URL` variable like this:
 
-```sh
+```shell
 export GATEWAY_URL=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 ```
 

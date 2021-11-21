@@ -29,7 +29,10 @@ samples/multicluster/gen-eastwest-gateway.sh --single-cluster | istioctl install
 You can list the Pods in the `istio-system` namespaces to check the gateway that was installed:
 
 ```shell
-$ kubectl get po -n istio-system
+kubectl get po -n istio-system
+```
+
+```console
 NAME                                     READY   STATUS    RESTARTS   AGE
 istio-eastwestgateway-59cc6fcdb6-b64rs   1/1     Running   0          34s
 istio-ingressgateway-69b7dd67d6-5pj6b    1/1     Running   0          7m58s
@@ -41,7 +44,10 @@ For virtual machines to access the Istio's control plane, we need to create a Ga
 We can use another script from the Istio package to create these resources and expose the control plane:
 
 ```shell
-$ kubectl apply -f samples/multicluster/expose-istiod.yaml
+kubectl apply -f samples/multicluster/expose-istiod.yaml
+```
+
+```console
 gateway.networking.istio.io/istiod-gateway created
 virtualservice.networking.istio.io/istiod-vs created
 ```
@@ -68,10 +74,16 @@ export SERVICE_ACCOUNT="vm-sa"
 Let's create the VM namespace and the service account we will use for VM workloads in the same namespace:
 
 ```shell
-$ kubectl create ns "${VM_NAMESPACE}"
+kubectl create ns "${VM_NAMESPACE}"
+```
+
+```console
 namespace/vm-namespace created
 
 $ kubectl create serviceaccount "${SERVICE_ACCOUNT}" -n "${VM_NAMESPACE}"
+```
+
+```console
 serviceaccount/vm-sa created
 ```
 
@@ -102,14 +114,20 @@ spec:
 We can now deploy this WorkloadGroup to the virtual machine namespace:
 
 ```shell
-$ kubectl apply -f workloadgroup.yaml -n ${VM_NAMESPACE}
+kubectl apply -f workloadgroup.yaml -n ${VM_NAMESPACE}
+```
+
+```console
 workloadgroup.networking.istio.io/hello-vm created
 ```
 
 Virtual machine needs information about the cluster and Istio's control plane to connect to it. To generate the required files, we can run `istioctl x workload entry` command. We save all generated files to the `WORK_DIR`:
 
 ```shell
-$ istioctl x workload entry configure -f workloadgroup.yaml -o "${WORK_DIR}" --autoregister
+istioctl x workload entry configure -f workloadgroup.yaml -o "${WORK_DIR}" --autoregister
+```
+
+```console
 warning: a security token for namespace vm-namespace and service account vm-sa has been generated and stored at /vm-files/istio-token
 configuration generation into directory /vm-files was successful
 ```
@@ -118,7 +136,7 @@ configuration generation into directory /vm-files was successful
 
 Now it's time to create and configure a virtual machine. I am running the virtual machine in GCP, just like the Kubernetes cluster. The virtual machine is using the Debian GNU/Linux 10 (Buster) image. Make sure you check "Allow HTTP traffic" under the Firewall section and you have SSH access to the instance.
 
->In this example, we run a simple Python HTTP server on port 80. You could configure any other service on a different port. Just make sure you configure the security and firewall rules accordingly.
+> In this example, we run a simple Python HTTP server on port 80. You could configure any other service on a different port. Just make sure you configure the security and firewall rules accordingly.
 
 From the instance details page, click the SSH dropdown and select "View gcloud command". You can run that command to set up the SSH connection with the instance (i.e. create the SSH keys).
 
@@ -127,6 +145,9 @@ From the instance details page, click the SSH dropdown and select "View gcloud c
     ```shell
     $ scp vm-files/* [USERNAME]@[INSTANCE_IP]:~
     Enter passphrase for key '/Users/[USERNAME]/.ssh/id_rsa':
+    ```
+
+    ```console
     bash: warning: setlocale: LC_ALL: cannot change locale (en_US.UTF-8)
     cluster.env                                          100%  589    12.6KB/s   00:00
     hosts                                                100%   38     0.8KB/s   00:00
@@ -137,7 +158,7 @@ From the instance details page, click the SSH dropdown and select "View gcloud c
 
     Alternatively, you an use `gcloud` command to copy the files over:
 
-    ```sh
+    ```shell
     gcloud compute scp vm-files/* [INSTANCE_NAME]:~ --zone=[INSTANCE_ZONE]
     ```
 
@@ -202,7 +223,10 @@ At this point, the virtual machine is configured to talk with the Istio's contro
 Let's deploy a Hello world application to the Kubernetes cluster. First, we need to enable the automatic sidecar injection in the `default` namespace:
 
 ```shell
-$ kubectl label namespace default istio-injection=enabled
+kubectl label namespace default istio-injection=enabled
+```
+
+```console
 namespace/default labeled
 ```
 
@@ -252,7 +276,10 @@ Save the above file to `hello-world.yaml` and deploy it using `kubectl apply -f 
 Wait for the Pods to become ready and then go back to the virtual machine and try to access the Kubernetes service:
 
 ```shell
-$ curl http://hello-world.default
+curl http://hello-world.default
+```
+
+```console
 Hello World
 ```
 
@@ -263,14 +290,20 @@ You can access any service running within your Kubernetes cluster from the virtu
 We can also run a workload on the virtual machine. Switch to the instance and run a simple Python HTTP server:
 
 ```shell
-$ sudo python3 -m http.server 80
+sudo python3 -m http.server 80
+```
+
+```console
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
 If you try to curl to the instance IP directly, you will get back a response (directory listing):
 
 ```shell
-$ curl [INSTANCE_IP]
+curl [INSTANCE_IP]
+```
+
+```console
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dt
 d">
 <html>
@@ -307,7 +340,10 @@ Save the above file to `hello-vm-service.yaml` and deploy it to the VM namespace
 Because we used the VM auto-registration, Istio automatically created the WorkloadEntry resource for us. You can check the WorkloadEntry resource with:
 
 ```shell
-$ kubectl get workloadentry -n vm-namespace
+kubectl get workloadentry -n vm-namespace
+```
+
+```console
 NAME                  AGE   ADDRESS
 hello-vm-10.128.0.7   12m   10.128.0.7
 ```
@@ -315,7 +351,10 @@ hello-vm-10.128.0.7   12m   10.128.0.7
 We can now use the Kubernetes service name `hello-vm.vm-namespace` to access the workload on the virtual machine. Let's run a Pod inside the cluster and try to access the service from there:
 
 ```shell
-$ kubectl run curl --image=radial/busyboxplus:curl -i --tty --rm
+kubectl run curl --image=radial/busyboxplus:curl -i --tty --rm
+```
+
+```console
 If you don't see a command prompt, try pressing enter.
 [ root@curl:/ ]$
 ```
@@ -324,6 +363,9 @@ After you get the command prompt in the Pod, you can run curl and access the wor
 
 ```shell
 [ root@curl:/ ]$ curl hello-vm.vm-namespace
+```
+
+```console
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dt
 d">
 <html>

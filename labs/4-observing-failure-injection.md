@@ -189,9 +189,9 @@ To generate some traffic, let's open a separate terminal window and start making
 while true; do curl http://$GATEWAY_URL/; done
 ```
 
->You can set the `GATEWAY_URL` variable like this:
+> You can set the `GATEWAY_URL` variable like this:
 
-  ```sh
+  ```shell
   export GATEWAY_URL=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
   ```
 

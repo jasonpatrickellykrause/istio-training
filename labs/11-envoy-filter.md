@@ -43,10 +43,13 @@ Save the above file to `envoy-header-filter.yaml` and deploy it using `kubectl a
 
 To see the header added, you can send a request to the Ingress gateway IP address:
 
-```sh
-$ export GATEWAY_URL=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+```shell
+export GATEWAY_URL=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 
-$ curl -s -I -X HEAD  http://$GATEWAY_URL
+curl -s -I -X HEAD  http://$GATEWAY_URL
+```
+
+```console
 HTTP/1.1 200 OK
 x-powered-by: Express
 content-type: text/html; charset=utf-8

@@ -15,7 +15,10 @@ curl https://func-e.io/install.sh | bash -s -- -b /usr/local/bin
 Once downloaded, let's run it to make sure all is good:
 
 ```shell
-$ func-e --version
+func-e --version
+```
+
+```console
 func-e version 0.5.0
 ```
 
@@ -33,7 +36,10 @@ sudo dpkg -i tinygo_0.18.0_amd64.deb
 You can run `tinygo version` to check the installation is successful:
 
 ```shell
-$ tinygo version
+tinygo version
+```
+
+```console
 tinygo version 0.18.0 linux/amd64 (using go version go1.16.5 and LLVM version 11.0.0)
 ```
 
@@ -183,7 +189,10 @@ func-e run -c envoy.yaml &
 Envoy instance should start without any issues. Once it's started, we can send a request to the port Envoy is listening on (`18000`):
 
 ```shell
-$ curl localhost:18000
+curl localhost:18000
+```
+
+```console
 [2021-06-22 16:39:31.491][5314][info][wasm] [external/envoy/source/extensions/common/wasm/context.cc:1218] wasm log: OnHttpRequestHeaders
 [2021-06-22 16:39:31.491][5314][info][wasm] [external/envoy/source/extensions/common/wasm/context.cc:1218] wasm log: OnHttpResponseHeaders
 [2021-06-22 16:39:31.492][5314][info][wasm] [external/envoy/source/extensions/common/wasm/context.cc:1218] wasm log: 2 finished
@@ -226,7 +235,10 @@ func-e run -c envoy.yaml &
 Now, if we send a request again (make sure to add the `-v` flag), we'll see the header that got added to the response:
 
 ```shell
-$ curl -v localhost:18000
+curl -v localhost:18000
+```
+
+```console
 ...
 < HTTP/1.1 200 OK
 < content-length: 13
@@ -358,7 +370,10 @@ Also, let's update the config file to include additional headers in the filter c
 With the filter updated, we can re-run the proxy again. When you send a request, you'll notice the headers we set in the filter configuration are added as response headers:
 
 ```shell
-$ curl -v localhost:18000
+curl -v localhost:18000
+```
+
+```console
 ...
 < HTTP/1.1 200 OK
 < content-length: 13
@@ -461,7 +476,10 @@ wasm log: hello_header_counter incremented
 You can also use the admin address on port 8001 to check that the metric is being tracked:
 
 ```shell
-$ curl localhost:8001/stats/prometheus | grep hello
+curl localhost:8001/stats/prometheus | grep hello
+```
+
+```console
 # TYPE envoy_hello_header_counter counter
 envoy_hello_header_counter{} 1
 ```
@@ -528,6 +546,9 @@ Let's create a new storage bucket first (use your name/alias instead of the `was
 
 ```shell
 gsutil mb gs://wasm-bucket
+```
+
+```console
 Creating gs://wasm-bucket/...
 ```
 
@@ -658,7 +679,10 @@ Save the above file to `httpbin.yaml` and deploy it using `kubectl apply -f http
 Before continuing, check that the httpbin Pod is up and running:
 
 ```shell
-$ kubectl get po
+kubectl get po
+```
+
+```console
 NAME                       READY   STATUS        RESTARTS   AGE
 httpbin-66cdbdb6c5-4pv44   2/2     Running       1          11m
 ```
@@ -670,7 +694,10 @@ Let's try out the deployed Wasm module!
 We will create a single Pod inside the cluster, and from there, we will send a request to `http://httpbin:8000/get`
 
 ```shell
-$ kubectl run curl --image=curlimages/curl -it --rm -- /bin/sh
+kubectl run curl --image=curlimages/curl -it --rm -- /bin/sh
+```
+
+```console
 Defaulted container "curl" out of: curl, istio-proxy, istio-init (init)
 If you don't see a command prompt, try pressing enter.
 / $
@@ -680,6 +707,9 @@ Once you get the prompt to the curl container, send a request to the `httpbin` s
 
 ```shell
 / $ curl -v http://httpbin:8000/headers
+```
+
+```console
 > GET /headers HTTP/1.1
 > User-Agent: curl/7.35.0
 > Host: httpbin:8000
