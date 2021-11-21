@@ -48,7 +48,7 @@ Save the above YAML to `my-nginx.yaml` and create the deployment using `kubectl 
 
 We have also deployed a my-nginx Kubernetes LoadBalancer service - this will allow us to generate some traffic to the `my-nginx` Pod.
 
->Note: later in the training we will learn how to use Istio resources and expose the services through Istios’ ingress gateway.
+> Note: later in the training we will learn how to use Istio resources and expose the services through Istios’ ingress gateway.
 
 Now we can run `kubectl get services` and get the external IP address of the `my-nginx` service. Note that the load balancer creation might take a couple of minutes. During that time the value in the `EXTERNAL-IP` column will be `<pending>`.
 

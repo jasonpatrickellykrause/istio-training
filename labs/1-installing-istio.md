@@ -60,7 +60,7 @@ If you need to install the Kubernetes CLI, follow [these instructions](https://k
 We can run `kubectl version` to check if the CLI is installed. You should see the output similar to this one:
 
 ```shell
-$ kubectl version
+kubectl version
 ```
 
 ```console
@@ -111,7 +111,7 @@ You will also be prompted to authorize cloud shell - you can safely click the Au
 To check if you're successfully connected to the cluster, you can run `kubectl get nodes` and you should see the output similar to this one:
 
 ```shell
-user@cloudshell:~$ kubectl get nodes
+kubectl get nodes
 ```
 
 ```console
