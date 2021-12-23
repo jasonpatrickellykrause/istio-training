@@ -304,7 +304,7 @@ You can access any service running within your Kubernetes cluster from the virtu
 
 ## Run services on the virtual machine
 
-We can also run a workload on the virtual machine. Switch to the virtuam machine instance and run a simple Python HTTP server:
+We can also run a workload on the virtual machine. Switch to the virtual machine instance and run a simple Python HTTP server:
 
 ```bash
 $ sudo python3 -m http.server 80
