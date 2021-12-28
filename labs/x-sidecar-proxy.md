@@ -53,7 +53,7 @@ spec:
 Save the above YAML `httpbin.yaml` file. We'll use Istio CLI to manually inject the sidecar to the deployment and create it:
 
 ```sh
-getmesh istioctl kube-inject -f httpbin.yaml | kubectl apply -f -
+istioctl kube-inject -f httpbin.yaml | kubectl apply -f -
 ```
 
 When the deployment is created we can edit it and configure the `istio-proxy` container to run as a priviledged container. This will allow us to look run the iptables command with root privileges.

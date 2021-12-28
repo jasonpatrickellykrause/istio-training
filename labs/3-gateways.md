@@ -1,4 +1,4 @@
-# Creating a deployment and using a Gateway to expose it
+# Lab: Creating a deployment and using a Gateway to expose it
 
 In this lab, we will deploy a Hello World application to the cluster. We will then deploy a Gateway resource and a VirtualService that binds to the Gateway to expose the application on the external IP address.
 
@@ -35,7 +35,7 @@ istio-system   istio-ingressgateway-777d97778b-8j8mj   1/1     Running   0      
 We can now use the Pod name (in this case `istio-ingressgateway-777d97778b-8j8mj`) in the proxy config routes command. Don't forget to add the `.istio-system` to the full Pod name:
 
 ```
-$ getmesh istioctl pc routes istio-ingressgateway-777d97778b-8j8mj.istio-system
+$ istioctl pc routes istio-ingressgateway-777d97778b-8j8mj.istio-system
 
 NAME        DOMAINS     MATCH                  VIRTUAL SERVICE
 http.80     *           /*                     404
@@ -145,7 +145,7 @@ hello-world   [gateway]   ["hello.com"]     3m31s
 Let's check the Envoy routes again:
 
 ```
-$ getmesh istioctl pc routes [ingress-gateway-pod]
+$ istioctl pc routes [ingress-gateway-pod]
 NAME        DOMAINS       MATCH                  VIRTUAL SERVICE
 http.80     hello.com     /*                     hello-world.default
             *             /healthz/ready*

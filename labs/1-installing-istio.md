@@ -135,7 +135,7 @@ no running Istio pods in "istio-system"
 
 The version command outputs the version of GetMesh, the version of active Istio CLI, and versions of Istio installed on the Kubernetes cluster.
 
-## Install Istio
+## Download and install Istio
 
 GetMesh communicates with the active Kubernetes cluster from the Kubernetes config file. Make sure you have the correct Kubernetes context selected (`kubectl config get-contexts`) before installing Istio.
 
@@ -143,7 +143,27 @@ The recommended profile for production deployments is the `default` profile. We 
 
 We can also start with the `minimal` component and individually install other features, like ingress and egress gateway, later.
 
-To install the demo profile of Istio on a currently active Kubernetes cluster, we can use the `getmesh istioctl` command like this:
+<!-- To install the demo profile of Istio on a currently active Kubernetes cluster, we have to download Istio first:
+
+```sh
+curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.12.1 sh - 
+```
+
+Next, let's copy the Istio CLI to the `/usr/local/bin` folder:
+
+```sh
+sudo cp istio-1.12.1/bin/istioctl /usr/local/bin
+```
+
+>Google Cloud Shell comes preinstalled with an older Istio CLI version.
+
+We can now install the demo profile of Istio:
+
+```sh
+istioctl install --set profile=demo -y
+``` -->
+
+To install the demo profile of Istio on a currently active Kubernetes cluster, we can use `getmesh istioctl` command like this:
 
 ```sh
 getmesh istioctl install --set profile=demo
@@ -162,10 +182,10 @@ We can run the version comand again (`getmesh version`). You’ll notice that th
 ```sh
 $ getmesh version
 getmesh version: 1.1.3
-active istioctl: 1.11.3-tetrate-v0
-client version: 1.11.3-tetrate-v0
-control plane version: 1.11.3-tetrate-v0
-data plane version: 1.11.3-tetrate-v0 (2 proxies)
+active istioctl: 1.12.1-tetrate-v0
+client version: 1.12.1-tetrate-v0
+control plane version: 1.12.1-tetrate-v0
+data plane version: 1.12.1-tetrate-v0 (2 proxies)
 ```
 
 To check the status of the installation, we can look at the status of the Pods in the `istio-system` namespace:
@@ -231,14 +251,14 @@ Events:
   Type     Reason       Age   From               Message
   ----     ------       ----  ----               -------
   Normal   Scheduled    30s   default-scheduler  Successfully assigned default/my-nginx-6b74b79f57-ks7p8 to gke-cluster-1-default-pool-ab26b687-9nsr
-  Normal   Pulled       27s   kubelet            Container image "containers.istio.tetratelabs.com/proxyv2:1.11.3-tetrate-v0" already present on machine
+  Normal   Pulled       27s   kubelet            Container image "containers.istio.tetratelabs.com/proxyv2:1.12.1" already present on machine
   Normal   Created      27s   kubelet            Created container istio-init
   Normal   Started      27s   kubelet            Started container istio-init
   Normal   Pulling      27s   kubelet            Pulling image "nginx"
   Normal   Pulled       23s   kubelet            Successfully pulled image "nginx" in 3.89712405s
   Normal   Created      22s   kubelet            Created container nginx
   Normal   Started      22s   kubelet            Started container nginx
-  Normal   Pulled       22s   kubelet            Container image "containers.istio.tetratelabs.com/proxyv2:1.11.3-tetrate-v0" already present on machine
+  Normal   Pulled       22s   kubelet            Container image "containers.istio.tetratelabs.com/proxyv2:1.12.1" already present on machine
   Normal   Created      22s   kubelet            Created container istio-proxy
   Normal   Started      22s   kubelet            Started container istio-proxy
 ```
@@ -363,7 +383,7 @@ kubectl delete iop demo-installation -n istio-system
 Once Istio is deleted, you have to also remove the IstioOperator:
 
 ```sh
-istioctl operator remove
+getmesh istioctl operator remove
 ```
 
 Finally, remove the `istio-system` namespace: `kubectl delete ns istio-system`.
