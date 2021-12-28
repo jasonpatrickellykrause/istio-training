@@ -3,7 +3,7 @@
 In this lab, we will be upgrading Istio 1.10.3 to Istio 1.11.3. To go through the upgrade process, we will start with an empty Kubernetes cluster. You can use the following command to remove any Istio versions you might have installed on the cluster:
 
 ```sh
-getmesh istioctl x uninstall --purge
+istioctl x uninstall --purge
 ```
 
 ## Installing Istio 1.10.3
@@ -118,7 +118,7 @@ $ getmesh istioctl proxy-status | grep $(kubectl get pod -l app=web-frontend -o 
 The output should be `1.10.3-tetrate-v0`. On the other hand the gateways (ingress and egress) are automatically upgraded in-place to 1.11.3 version:
 
 ```sh
-$ getmesh istioctl proxy-status | grep $(kubectl -n istio-system get pod -l app=istio-ingressgateway -o jsonpath='{.items..metadata.name}') | awk '{print $7}'
+$ istioctl proxy-status | grep $(kubectl -n istio-system get pod -l app=istio-ingressgateway -o jsonpath='{.items..metadata.name}') | awk '{print $7}'
 1.11.3-tetrate-v0
 ```
 

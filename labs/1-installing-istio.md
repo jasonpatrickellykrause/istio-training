@@ -113,7 +113,7 @@ project-name-default-pool-e46ed8ba-xr0n   Ready    <none>   23m   v1.18.17-gke.1
 user@cloudshell:~$
 ```
 
-## Install GetMesh CLI
+<!-- ## Install GetMesh CLI
 
 The first step is to download GetMesh CLI. You can install GetMesh on macOS and Linux platforms. We can use the following command to download the latest version of GetMesh and certified Istio:
 
@@ -133,18 +133,36 @@ no running Istio pods in "istio-system"
 1.11.3-tetrate-v0
 ```
 
-The version command outputs the version of GetMesh, the version of active Istio CLI, and versions of Istio installed on the Kubernetes cluster.
+The version command outputs the version of GetMesh, the version of active Istio CLI, and versions of Istio installed on the Kubernetes cluster. -->
 
-## Install Istio
+## Download and install Istio
 
-GetMesh communicates with the active Kubernetes cluster from the Kubernetes config file. Make sure you have the correct Kubernetes context selected (`kubectl config get-contexts`) before installing Istio.
+<!-- GetMesh communicates with the active Kubernetes cluster from the Kubernetes config file. Make sure you have the correct Kubernetes context selected (`kubectl config get-contexts`) before installing Istio. -->
 
 The recommended profile for production deployments is the `default` profile. We will be installing the `demo` profile as it contains all core components, has a high level of tracing and logging enabled, and is meant for learning about different Istio features.
 
 We can also start with the `minimal` component and individually install other features, like ingress and egress gateway, later.
 
-To install the demo profile of Istio on a currently active Kubernetes cluster, we can use the `getmesh istioctl` command like this:
+To install the demo profile of Istio on a currently active Kubernetes cluster, we can have to download Istio first:
 
+```sh
+curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.12.1 sh - 
+```
+
+Next, let's copy the Istio CLI to the `/usr/local/bin` folder:
+
+```sh
+sudo cp istio-1.12.1/bin/istioctl /usr/local/bin
+```
+
+>Google Cloud Shell comes preinstalled with an older Istio CLI version.
+
+We can now install the demo profile of Istio:
+
+```sh
+istioctl install --set profile=demo -y
+```
+<!-- 
 ```sh
 getmesh istioctl install --set profile=demo
 ```
@@ -155,7 +173,7 @@ Once the installation completes you will see the following line in the output:
 
 ```sh
 ✔ Istio is installed and verified successfully
-```
+``` 
 
 We can run the version comand again (`getmesh version`). You’ll notice that the output shows the control plane and data plane versions installed on the cluster.
 
@@ -167,6 +185,7 @@ client version: 1.11.3-tetrate-v0
 control plane version: 1.11.3-tetrate-v0
 data plane version: 1.11.3-tetrate-v0 (2 proxies)
 ```
+-->
 
 To check the status of the installation, we can look at the status of the Pods in the `istio-system` namespace:
 
@@ -231,14 +250,14 @@ Events:
   Type     Reason       Age   From               Message
   ----     ------       ----  ----               -------
   Normal   Scheduled    30s   default-scheduler  Successfully assigned default/my-nginx-6b74b79f57-ks7p8 to gke-cluster-1-default-pool-ab26b687-9nsr
-  Normal   Pulled       27s   kubelet            Container image "containers.istio.tetratelabs.com/proxyv2:1.11.3-tetrate-v0" already present on machine
+  Normal   Pulled       27s   kubelet            Container image "containers.istio.tetratelabs.com/proxyv2:1.12.1" already present on machine
   Normal   Created      27s   kubelet            Created container istio-init
   Normal   Started      27s   kubelet            Started container istio-init
   Normal   Pulling      27s   kubelet            Pulling image "nginx"
   Normal   Pulled       23s   kubelet            Successfully pulled image "nginx" in 3.89712405s
   Normal   Created      22s   kubelet            Created container nginx
   Normal   Started      22s   kubelet            Started container nginx
-  Normal   Pulled       22s   kubelet            Container image "containers.istio.tetratelabs.com/proxyv2:1.11.3-tetrate-v0" already present on machine
+  Normal   Pulled       22s   kubelet            Container image "containers.istio.tetratelabs.com/proxyv2:1.12.1" already present on machine
   Normal   Created      22s   kubelet            Created container istio-proxy
   Normal   Started      22s   kubelet            Started container istio-proxy
 ```
@@ -255,7 +274,7 @@ deployment.apps "my-nginx" deleted
 To completely uninstall Istio from the cluster, run the following command:
 
 ```sh
-getmesh istioctl x uninstall --purge
+istioctl x uninstall --purge
 ```
 
 Press `y` to proceed with uninstalling Istio.
@@ -267,7 +286,7 @@ To get started we'll initialize the default Istio operator first. The init comma
 Let's initalize the operator first:
 
 ```sh
-getmesh istioctl operator init
+istioctl operator init
 ```
 
 Istio operator is deployed to the `istio-operator` namespace:
