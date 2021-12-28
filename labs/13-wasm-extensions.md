@@ -396,7 +396,7 @@ func (*vmContext) NewPluginContext(contextID uint32) types.PluginContext {
 }
 ```
 
-Since we want need to check the incoming request headers to decide whether to increment the counter, we need to add the `helloHeaderCounter` to the `httpHeaders` struct as well:
+Since we need to check the incoming request headers to decide whether to increment the counter, we need to add the `helloHeaderCounter` to the `httpHeaders` struct as well:
 
 ```go
 type httpHeaders struct {
@@ -447,13 +447,13 @@ tinygo build -o main.wasm -scheduler=none -target=wasi main.go
 
 And then re-run the Envoy proxy. Make a couple of requests like this:
 
-"`sh
+```sh
 curl -H "hello: something" localhost:18000
 ```
 
 You'll notice the log Envoy log entry like this one:
 
-"`text
+```text
 wasm log: hello_header_counter incremented
 ```
 

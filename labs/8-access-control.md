@@ -158,7 +158,7 @@ spec:
 
 Save the above to `customers-v1.yaml` and create the deployment and service using `kubectl apply -f customers-v1.yaml`. 
 
-LEt's set the `GATEWAY_URL` variable:
+Let's set the `GATEWAY_URL` variable:
 
 ```sh
 export GATEWAY_URL=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
