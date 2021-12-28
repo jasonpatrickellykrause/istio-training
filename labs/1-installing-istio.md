@@ -113,7 +113,7 @@ project-name-default-pool-e46ed8ba-xr0n   Ready    <none>   23m   v1.18.17-gke.1
 user@cloudshell:~$
 ```
 
-<!-- ## Install GetMesh CLI
+## Install GetMesh CLI
 
 The first step is to download GetMesh CLI. You can install GetMesh on macOS and Linux platforms. We can use the following command to download the latest version of GetMesh and certified Istio:
 
@@ -133,17 +133,17 @@ no running Istio pods in "istio-system"
 1.11.3-tetrate-v0
 ```
 
-The version command outputs the version of GetMesh, the version of active Istio CLI, and versions of Istio installed on the Kubernetes cluster. -->
+The version command outputs the version of GetMesh, the version of active Istio CLI, and versions of Istio installed on the Kubernetes cluster.
 
 ## Download and install Istio
 
-<!-- GetMesh communicates with the active Kubernetes cluster from the Kubernetes config file. Make sure you have the correct Kubernetes context selected (`kubectl config get-contexts`) before installing Istio. -->
+GetMesh communicates with the active Kubernetes cluster from the Kubernetes config file. Make sure you have the correct Kubernetes context selected (`kubectl config get-contexts`) before installing Istio.
 
 The recommended profile for production deployments is the `default` profile. We will be installing the `demo` profile as it contains all core components, has a high level of tracing and logging enabled, and is meant for learning about different Istio features.
 
 We can also start with the `minimal` component and individually install other features, like ingress and egress gateway, later.
 
-To install the demo profile of Istio on a currently active Kubernetes cluster, we can have to download Istio first:
+<!-- To install the demo profile of Istio on a currently active Kubernetes cluster, we have to download Istio first:
 
 ```sh
 curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.12.1 sh - 
@@ -161,8 +161,10 @@ We can now install the demo profile of Istio:
 
 ```sh
 istioctl install --set profile=demo -y
-```
-<!-- 
+``` -->
+
+To install the demo profile of Istio on a currently active Kubernetes cluster, we can use `getmesh istioctl` command like this:
+
 ```sh
 getmesh istioctl install --set profile=demo
 ```
@@ -173,19 +175,18 @@ Once the installation completes you will see the following line in the output:
 
 ```sh
 ✔ Istio is installed and verified successfully
-``` 
+```
 
 We can run the version comand again (`getmesh version`). You’ll notice that the output shows the control plane and data plane versions installed on the cluster.
 
 ```sh
 $ getmesh version
 getmesh version: 1.1.3
-active istioctl: 1.11.3-tetrate-v0
-client version: 1.11.3-tetrate-v0
-control plane version: 1.11.3-tetrate-v0
-data plane version: 1.11.3-tetrate-v0 (2 proxies)
+active istioctl: 1.12.1-tetrate-v0
+client version: 1.12.1-tetrate-v0
+control plane version: 1.12.1-tetrate-v0
+data plane version: 1.12.1-tetrate-v0 (2 proxies)
 ```
--->
 
 To check the status of the installation, we can look at the status of the Pods in the `istio-system` namespace:
 
@@ -274,7 +275,7 @@ deployment.apps "my-nginx" deleted
 To completely uninstall Istio from the cluster, run the following command:
 
 ```sh
-istioctl x uninstall --purge
+getmesh istioctl x uninstall --purge
 ```
 
 Press `y` to proceed with uninstalling Istio.
@@ -286,7 +287,7 @@ To get started we'll initialize the default Istio operator first. The init comma
 Let's initalize the operator first:
 
 ```sh
-istioctl operator init
+getmesh istioctl operator init
 ```
 
 Istio operator is deployed to the `istio-operator` namespace:
@@ -382,7 +383,7 @@ kubectl delete iop demo-installation -n istio-system
 Once Istio is deleted, you have to also remove the IstioOperator:
 
 ```sh
-istioctl operator remove
+getmesh istioctl operator remove
 ```
 
 Finally, remove the `istio-system` namespace: `kubectl delete ns istio-system`.
