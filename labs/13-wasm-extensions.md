@@ -19,7 +19,7 @@ func-e --version
 ```
 
 ```console
-func-e version 0.5.0
+func-e version 1.1.1
 ```
 
 ## Installing TinyGo
@@ -29,8 +29,8 @@ TinyGo powers the SDK we'll be using as Wasm doesn't support the official Go com
 Let's download and install the TinyGo:
 
 ```shell
-wget https://github.com/tinygo-org/tinygo/releases/download/v0.18.0/tinygo_0.18.0_amd64.deb
-sudo dpkg -i tinygo_0.18.0_amd64.deb
+wget https://github.com/tinygo-org/tinygo/releases/download/v0.21.0/tinygo_0.21.0_amd64.deb
+sudo dpkg -i tinygo_0.21.0_amd64.deb
 ```
 
 You can run `tinygo version` to check the installation is successful:
@@ -40,7 +40,7 @@ tinygo version
 ```
 
 ```console
-tinygo version 0.18.0 linux/amd64 (using go version go1.16.5 and LLVM version 11.0.0)
+tinygo version 0.21.0 linux/amd64 (using go version go1.17.2 and LLVM version 11.0.0)
 ```
 
 ## Scaffolding the Wasm module
@@ -193,10 +193,10 @@ curl localhost:18000
 ```
 
 ```console
-[2021-06-22 16:39:31.491][5314][info][wasm] [external/envoy/source/extensions/common/wasm/context.cc:1218] wasm log: OnHttpRequestHeaders
-[2021-06-22 16:39:31.491][5314][info][wasm] [external/envoy/source/extensions/common/wasm/context.cc:1218] wasm log: OnHttpResponseHeaders
-[2021-06-22 16:39:31.492][5314][info][wasm] [external/envoy/source/extensions/common/wasm/context.cc:1218] wasm log: 2 finished
-example body
+[2021-11-04 22:41:19.982][91521][info][wasm] [source/extensions/common/wasm/context.cc:1167] wasm log: OnHttpRequestHeaders
+[2021-11-04 22:41:19.982][91521][info][wasm] [source/extensions/common/wasm/context.cc:1167] wasm log: OnHttpResponseHeaders
+[2021-11-04 22:41:19.983][91521][info][wasm] [source/extensions/common/wasm/context.cc:1167] wasm log: 2 finished
+hello world
 ```
 
 The output shows the two log entries - one from the OnHttpRequestHeaders handler and the second one from the OnHttpResponseHeaders handler. The last line is the example response returned by the direct response configuration in the filter.
@@ -226,7 +226,7 @@ Let's rebuild the extension:
 tinygo build -o main.wasm -scheduler=none -target=wasi main.go
 ```
 
-And we can now re-run the Envoy proxy with the updated extension:
+And we can now re-run the Envoy proxy with the updated extension (make sure to run `fg` first to bring the previous Envoy instance to the foreground and then use <kbd>CTRL+C</kbd> to stop it):
 
 ```shell
 func-e run -c envoy.yaml &
@@ -247,8 +247,10 @@ curl -v localhost:18000
 < date: Mon, 22 Jun 2021 17:02:31 GMT
 < server: envoy
 <
-example body
+hello world
 ```
+
+You can stop running Envoy by typing `fg` and then pressing <kbd>CTRL+C</kbd>.
 
 ## Reading values from configuration
 
@@ -274,7 +276,9 @@ Hardcoded values like this in code are never a good idea. Let's see how we can r
   }
   ```
   
-1. In the `OnPluginStart` function we can now read in values from the Envoy configuration and store the key/value pairs in the `additionalHeaders` map:
+
+1. We can add the `OnPluginStart` function where we read in values from the Envoy configuration and store the key/value pairs in the `additionalHeaders` map:
+
 
   ```go
   func (ctx *pluginContext) OnPluginStart(pluginConfigurationSize int) types.OnPluginStartStatus {
@@ -345,7 +349,7 @@ Let's rebuild the extension again:
 tinygo build -o main.wasm -scheduler=none -target=wasi main.go
 ```
 
-Also, let's update the config file to include additional headers in the filter configuration:
+Also, let's update the config file to include additional headers in the filter configuration (the `configuration` field):
 
 ```yaml
 - name: envoy.filters.http.wasm
@@ -411,7 +415,7 @@ func (*vmContext) NewPluginContext(contextID uint32) types.PluginContext {
 }
 ```
 
-Since we want need to check the incoming request headers to decide whether to increment the counter, we need to add the `helloHeaderCounter` to the `httpHeaders` struct as well:
+Since we need to check the incoming request headers to decide whether to increment the counter, we need to add the `helloHeaderCounter` to the `httpHeaders` struct as well:
 
 ```go
 type httpHeaders struct {
@@ -464,7 +468,6 @@ And then re-run the Envoy proxy. Make a couple of requests like this:
 
 ```shell
 curl -H "hello: something" localhost:18000
-
 ```
 
 You'll notice the log Envoy log entry like this one:
@@ -484,149 +487,75 @@ curl localhost:8001/stats/prometheus | grep hello
 envoy_hello_header_counter{} 1
 ```
 
-## Deploying Wasm module to Istio using EnvoyFilter
+## Deploying Wasm module to Istio using WasmPlugin
 
-The resource we can use to deploy a Wasm module to Istio is called the EnvoyFilter. EnvoyFilter gives us the ability to customize the Envoy configuration. It allows us to modify values, configure new listeners or clusters, and add filters.
+The resource we can use to deploy a Wasm module to Istio is called the WasmPlugin. The WasmPlugin allows us to select the workloads we want to apply the Wasm module to as well as point to the Wasm module.
+
+In previous Istio versions we'd have to use the EnvoyFilter resource to configure the Wasm plugins. Within the resource we could either point to a local Wasm file (i.e. file that's accessible by the Istio proxy) or a remote location. Using the remote location (e.g. `http://some-storage-account/main.wasm`), the Istio proxy would download the Wasm file and cache it in the volume accessible to the proxy.
+
+With the move to the WasmPlugin resource, a feature was added that enables Istio proxy (or istio-agent to be precise) download the Wasm file from an OCI-compliant registry. What that means is that we can treate the Wasm files just like we treat Docker images. We can push them to a registry, version them using tags and reference them from the WasmPlugin resource.
 
 In the previous example, there was no need to push or publish the `main.wasm` file anywhere, as it was accessible by the Envoy proxy because everything was running locally. However, now that we want to run the Wasm module in Envoy proxies that are part of the Istio service mesh, we need to make the `main.wasm` file available to all those proxies so they can load and run it.
 
-Since Envoy can be extended using filters, we can use the Envoy HTTP Wasm filter to implement an HTTP filter with a Wasm module. This filter allows us to configure the Wasm module and load the module file.
+Since we'll be building and pushing the Wasm file we'll need a very minimal Dockerfile in the project:
 
-Here's a snippet that shows how to load a Wasm module using the Envoy HTTP Wasm filter:
-
-```yaml
-name: envoy.filters.http.wasm
-typed_config:
-  "@type": type.googleapis.com/envoy.extensions.filters.http.wasm.v3.Wasm
-  config:
-    config:
-      name: "my_plugin"
-      vm_config:
-        runtime: "envoy.wasm.runtime.v8"
-        code:
-          local:
-            filename: "/etc/envoy_filter_http_wasm_example.wasm"
-        allow_precompiled: true
-    configuration:
-       '@type': type.googleapis.com/google.protobuf.StringValue
-       value: |
-         {}
+```dockerfile
+FROM scratch
+COPY main.wasm ./plugin.wasm
 ```
 
-This particular snippet is reading the Wasm file from the local path. Note that "local" in this case refers to the container the Envoy proxy is running in.
+This Docker file just copies the `main.wasm` file to the container as `plugin.wasm` file. Save the above contents to `Dockerfile`.
 
-One way we could bring the Wasm module to that container is to use a persistent volume, for example. We'd then copy the Wasm file to the persistent disk and use the following annotations to mount the volume into the Envoy proxy sidecars:
+Before we build the image, let's create a repository - replace the `REPOSITORY_NAME` with your username:
 
-```yaml
-sidecar.istio.io/userMount: '[{"name": "wasmfilters", "mountPath": "/wasmfilters"}]'
-sidecar.istio.io/userVolume: '[{"name": "wasmfilters", "gcePersistentDisk": { "pdName": "my-data-disk", "fsType": "ext4" }}]'
+```sh
+gcloud artifacts repositories create REPOSITORY_NAME --repository-format=docker --location=us-west1 --description="Docker repository for Istio training"
 ```
 
-Note that the above snippet assumes a persistent disk running in GCP. The disk could be any other persistent volume as well. We'd then have to patch the existing Kubernetes deployments and 'inject' the above annotations.
+And configure the credentials:
 
-Luckily for us, there is another option. Remember the local field from the Envoy HTTP Wasm filter configuration? Well, there's also a remote field we can use to load the Wasm module from a remote location, a URL. The remote field simplifies things a lot! We can upload the .wasm file to remote storage, get the public URL to the module, and then use it.
-
-In this example, we'll upload the module to a GCP storage account and made the file publicly accessible.
-
-The updated configuration would now look like this:
-
-```yaml
-vm_config:
-  runtime: envoy.wasm.runtime.v8
-  code:
-    remote:
-      http_uri:
-        uri: [PUBLIC-URL]/extension.wasm
-        sha256: "[sha]"
+```sh
+gcloud auth configure-docker us-west1-docker.pkg.dev
 ```
 
-You can get the SHA by running sha256sum command. If you're using Istio 1.9 or newer, you don't have to provide the sha256 checksum, as Istio will fill that automatically. However, if you're using Istio 1.8 or older, the sha256 checksum is required, and it prevents the Wasm module from being downloaded each time.
-
-Let's create a new storage bucket first (use your name/alias instead of the `wasm-bucket` value), using the `gsutil` command (the command is available in the GCP cloud shell):
+We can now use the full repository name to build the image called `wasm` (make sure to replace the `YOUR_PROJECT_NAME`, `REPOSITORY_NAME`, and the region if you used a different one):
 
 ```shell
-gsutil mb gs://wasm-bucket
+docker build -t us-west1-docker.pkg.dev/[YOUR_PROJECT_NAME]/[REPOSITORY_NAME]/wasm:v1 .
 ```
 
-```console
-Creating gs://wasm-bucket/...
-```
-
-Next, we use the commands below to copy the built extension to the Google Cloud Storage and make it publicly accessible:
+Next, let's push the image to the registry, so the Istio agent can pull it when needed:
 
 ```shell
-BUCKET_NAME="wasm-bucket"
-
-# Copy the extension to the storage bucket
-gsutil cp main.wasm gs://$BUCKET_NAME
-
-# Make the extension readable to all users
-gsutil acl ch -u AllUsers:R gs://$BUCKET_NAME/main.wasm
+docker push us-west1-docker.pkg.dev/[YOUR_PROJECT_NAME]/[REPOSITORY_NAME]/wasm:v1
 ```
 
-The URL where the uploaded file is available is: `http://BUCKET_NAME.storage.googleapis.com/OBJECT_NAME`. For example, `http://wasm-bucket.storage.googleapis.com/main.wasm`.
+Finally, we'll update the policy to allow public access to the repository - this will allow Istio to pull the images without any extra credentials. Note that the WasmPlugin resource also supports providing the image pull secrets file for private registries.
 
-We can now create the EnvoyFilter resource that tells Envoy where to download the extension as well as where to inject it (make sure you update the `uri` field with your bucket URI):
+The following command IaM policy binding for the repository and assigns all users the `roles/viewer` role: 
+
+```shell
+gcloud artifacts repositories add-iam-policy-binding [REPOSITORY_NAME] --location=us-west1 --member=allUsers --role=roles/viewer
+```  
+
+We can now create the WasmPlugin resource that tells Envoy where to download the extension from as well as to which workloads to apply it to (we'll use `httpbin` workload we'll deploy next). Also make sure you update the `YOUR_PROJECT_NAME` and `REPOSITORY_NAME` values in the `url` field:
 
 ```yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
+apiVersion: extensions.istio.io/v1alpha1
+kind: WasmPlugin
 metadata:
-  name: headers-extension
+  name: wasm-example
+  namespace: default
 spec:
-  configPatches:
-  - applyTo: EXTENSION_CONFIG
-    patch:
-      operation: ADD
-      value:
-        name: headers-extension
-        typed_config:
-          "@type": type.googleapis.com/udpa.type.v1.TypedStruct
-          type_url: type.googleapis.com/envoy.extensions.filters.http.wasm.v3.Wasm
-          value:
-            config:
-              vm_config:
-                vm_id: headers-extension-vm
-                runtime: envoy.wasm.runtime.v8
-                code:
-                  remote:
-                    http_uri:
-                      uri: https://wasm-bucket.storage.googleapis.com/main.wasm
-              configuration:
-                "@type": type.googleapis.com/google.protobuf.StringValue
-                value: |
-                  header_1=somevalue
-                  header_2=secondvalue
-  - applyTo: HTTP_FILTER
-    match:
-      context: SIDECAR_INBOUND
-      listener:
-        filterChain:
-          filter:
-            name: envoy.filters.network.http_connection_manager
-    patch:
-      operation: INSERT_BEFORE
-      value:
-        name: headers-extension
-        config_discovery:
-          config_source:
-            ads: {}
-            initial_fetch_timeout: 0s # wait indefinitely to prevent bad Wasm fetch
-          type_urls: [ "type.googleapis.com/envoy.extensions.filters.http.wasm.v3.Wasm"]
+  selector:
+    matchLabels:
+      app: httpbin
+  url: oci://us-west1-docker.pkg.dev/[YOUR_PROJECT_NAME]/[REPOSITORY_NAME]/wasm:v1
 ```
 
-Note that we're deploying the EnvoyFilters to the default namespace. We could also deploy them to a root namespace (e.g. `istio-system`) if we wanted to apply the filter to all workloads in the mesh. Additionally, we could specify the selectors to pick the workloads to which we want to apply the filter.
+Save the above YAML to `plugin.yaml` and deploy it using `kubectl apply -f plugin.yaml`.
 
-Save the above YAML to `envoyfilter.yaml` file and create it:
-
-```shell
-$ kubectl apply -f envoyfilter.yaml
-envoyfilter.networking.istio.io/headers-extension created
-```
-
-To try out the module, you can deploy a sample workload.
-
-I am using this httpbin example:
+To try out the module, you can deploy a sample workload. We'll use the `httpbin` example:
 
 ```yaml
 apiVersion: v1
@@ -658,12 +587,10 @@ spec:
   selector:
     matchLabels:
       app: httpbin
-      version: v1
   template:
     metadata:
       labels:
         app: httpbin
-        version: v1
     spec:
       serviceAccountName: httpbin
       containers:
@@ -691,7 +618,7 @@ To see if something went wrong with downloading the Wasm module, you can look at
 
 Let's try out the deployed Wasm module!
 
-We will create a single Pod inside the cluster, and from there, we will send a request to `http://httpbin:8000/get`
+We will create a single Pod inside the cluster, and from there, we will send a request to `http://httpbin:8000/get` and include the `hello` header.
 
 ```shell
 kubectl run curl --image=curlimages/curl -it --rm -- /bin/sh
@@ -723,19 +650,25 @@ Once you get the prompt to the curl container, send a request to the `httpbin` s
 < access-control-allow-origin: *
 < access-control-allow-credentials: true
 < x-envoy-upstream-service-time: 3
-< header_1: somevalue
-< header_2: secondvalue
 ...
 ```
 
-Notice the two headers we defined in the Wasm module are being set in the response.
+
+If we exit the pod and look at the stats, we'll notice that the `hello_header_counter` has increased:
+
+```
+kubectl exec -it [httpbin-pod-name] -c istio-proxy -- curl localhost:15000/stats/prometheus | grep hello
+
+# TYPE hello_header_counter counter
+hello_header_counter{} 1
+```
 
 ## Cleanup
 
 To delete all resource created during this lab, run the following:
 
 ```shell
-kubectl delete envoyfilter headers-extension
+kubectl delete wasmplugin wasm-example
 kubectl delete deployment httpbin
 kubectl delete svc httpbin
 kubectl delete sa httpbin

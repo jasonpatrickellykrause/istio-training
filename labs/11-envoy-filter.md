@@ -1,4 +1,4 @@
-# EnvoyFilter
+# Envoy Filter
 
 Let's deploy the web frontend workload first using `kubectl apply -f envoy-demo-apps.yaml`.
 
@@ -19,7 +19,7 @@ spec:
     match:
       context: SIDECAR_INBOUND
       proxy:
-        proxyVersion: '1\.9.*'
+        proxyVersion: '1\.11.*'
       listener:
         portNumber: 8080
         filterChain:
@@ -39,13 +39,12 @@ spec:
             end
 ```
 
-Save the above file to `envoy-header-filter.yaml` and deploy it using `kubectl apply -f envoy-header-filter.yaml`.
+Save the above YAML to `envoy-header-filter.yaml` and deploy it using `kubectl apply -f envoy-header-filter.yaml`.
 
 To see the header added, you can send a request to the Ingress gateway IP address:
 
 ```shell
 export GATEWAY_URL=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-
 curl -s -I -X HEAD  http://$GATEWAY_URL
 ```
 
@@ -61,7 +60,7 @@ api-version: v1
 server: istio-envoy
 ```
 
-Similarly, we can use the `istioctl proxy-config listener [podname] -o json` to get the Envoy configuration and see where the Lua filter was added.
+Similarly, we can use the `istioctl proxy-config listener [web-frontend-pod-name] -o json` to get the Envoy configuration and see where the Lua filter was added.
 
 Here's a snippet from the above JSON configuration. Notice the Lua filter was injected just before the router filter:
 

@@ -20,6 +20,7 @@ spec:
       hosts:
         - '*'
 ```
+>Note that we've set hosts to `*`. This way we can use the ingress gateway IP address directly, instead of adding the host header to each request.
 
 Save the above YAML to `gateway.yaml` and create the Gateway using `kubectl apply -f gateway.yaml`.
 
@@ -201,17 +202,17 @@ We should start noticing some of the requests taking longer than usual. Let's op
 getmesh istioctl dash grafana
 ```
 
-When Grafana opens, click **Home** and the **Istio Service Dashboard**. On the dashboard, make sure to select the `web-frontend.default.svc.cluster.local` in the Service dropdown.
+Open the URL in your browser, click **Home** and from the **istio** folder click the **Istio Service Dashboard**. On the dashboard, make sure to select the `web-frontend.default.svc.cluster.local` in the Service dropdown.
 
 Expand the **Service Workloads** section and you will notice the increased duration on the **Incoming Request Duration by Service Workload** graph, as shown in the figure below.
 
 ![Incoming Request Duration by Source](./img/4-incoming-req-duration.png)
 
-You can notice the same delay being reported on the `web-frontend.default.svc.cluster.local` service side.
+You can notice the same delay being reported in the **General** (client and server request duration graphs) and in the **Client Workloads** section (incoming request duration by source graph).
 
-Let's see how this delay shows up in Zipkin. Open Zipkin with `getmesh istioctl dash zipkin`. On the main screen, select the `serviceName` and `web-frontend.default`, then add the `minDuration` criteria and enter `5s` and click the search button to find traces.
+Let's see how this delay shows up in Zipkin. Open Zipkin with `istioctl dash zipkin`. On the main screen, select the `serviceName` and `web-frontend.default`, then add the `minDuration` criteria and enter `5s` and click the **Run query** button to find traces.
 
-Click on one of the traces to open the details page. On the details page, we will notice the duration is 5 seconds. We will also see the `response_flags` tag set to `DI`. "DI" indicates that the request was delayed.
+Click the Show button next to one of the traces to open the details page. On the details page, you will notice the total duration is a bit over 5 seconds. We will also see the `response_flags` tag set to `DI`. "DI" indicates that the request was delayed.
 
 ![Traces in Zipkin](./img/4-zipkin-traces-5s.png)
 
@@ -235,7 +236,7 @@ spec:
       fault:
         abort:
           httpStatus: 500
-          percentage: 
+          percentage:
             value: 50
 ```
 
@@ -247,23 +248,23 @@ Go back to Grafana and open the **Istio Mesh Dashboard**. Note how the global su
 
 ![500s](./img/4-5xx-rate.png)
 
-From the same dashboard, we can click the `web-frontend.default` workload from the list of workloads to open a dedicated dashboard for that workload.
+From the same dashboard, we can click the `web-frontend.default` from the **Workload** column to open a dedicated dashboard for that workload.
 
 Expand the **Outbound Services** and you'll notice a graph called "Outgoing Requests By Destination And Response Code". The graph will show a clear breakdown of HTTP 200 and HTTP 500 responses from the customers service.
 
 ![Grafana and HTTP 500s](./img/4-grafana-500s.png)
 
-There's a similar story in Zipkin. If we search for traces again (we can remove the min duration), we will notice the traces with errors will show up in red color, as shown below.
+There's a similar story in Zipkin. If we search for traces again (`serviceName=web-frontend.default`) we will notice the traces with errors will show up in red color (look at the duration column). Note that we can remove the `minDuration` from the query.
 
 ![Traces with errors](./img/4-zipkin-trace-500.png)
 
-If you click on the trace you will notice the `response_flags` are set to FI, which stands for Failure Injection.
+If you click Show next to the trace with an error you will notice the `response_flags` are set to `FI`, which stands for Failure Injection.
 
-Let's also open Kiali (`getmesh istioctl dash kiali`) and look at the service graph by clicking the Graph link from the sidebar. You will notice how the `web-frontend` service has a red border, as shown below.
+Let's also open Kiali (`istioctl dash kiali`) and look at the service graph by clicking the Graph link from the sidebar. You will notice how the `web-frontend` service has a red border, as shown below.
 
 ![Kiali error graph](./img/4-kiali-error-graph.png)
 
-If we click on the `web-frontend` service and look at the sidebar on the right, you will notice the HTTP requests' details. The graph shows the percentage of success and failures. The success rate of outgoing requests is around 50%, which corresponds to the percentage value we set in the VirtualService.
+If we click on Graph and then the `web-frontend` service, we'll notice in the sidebar on the right the HTTP request details. The graph shows the percentage of success and failures. The success rate of outgoing requests is around 50%, which corresponds to the percentage value we set in the VirtualService.
 
 ## Cleanup
 

@@ -115,7 +115,7 @@ kubectl label namespace default istio-injection=enabled
 namespace/default labeled
 ```
 
-And the deploy the v1 of the Customer service:
+And then deploy the v1 of the Customer service: 
 
 ```yaml
 apiVersion: apps/v1
@@ -197,7 +197,7 @@ export GATEWAY_URL=$(kubectl get svc istio-ingressgateway -n istio-system -o jso
 
 Accessing the `GATEWAY_URL` works because of the permissive mode, where plain text traffic is sent to the services that don't have the proxy. In this case, the ingress gateway sends plain text traffic to the Web frontend because there's no proxy.
 
-If we open Kiali with `getmesh istioctl dash kiali` and look at the Graph, you will notice that Kiali detects calls being made from the ingress gateway to `web-frontend`. However, the calls being made to the `customers` service are coming from `unknown` service. This is because there's no proxy next to the web frontend, and Istio doesn't know who, where or what that service is.
+If we open Kiali with `istioctl dash kiali` and look at the Graph (make sure you switch to the **Service graph**), you will notice that Kiali detects calls being made from the ingress gateway to `web-frontend`. However, the calls being made to the `customers` service are coming from `unknown` service. This is because there's no proxy next to the web frontend, and Istio doesn't know who, where or what that service is.
 
 ![Unknown service calls the customers service](./img/7-kiali-no-tls.png)
 
@@ -243,11 +243,14 @@ $ while true; do curl -H "Host: customers.default.svc.cluster.local" http://$GAT
 $ while true; do curl http://$GATEWAY_URL; done
 ```
 
-Open Kiali and look at the Graph. From the **Display** dropdown, make sure we check the **Security** option. You should see a graph similar to the one in the following figure.
+Open Kiali and look at the Graph. From the **Display** dropdown, make sure we check the **Security** option and **Service graph**. You should see a graph similar to the one in the following figure.
 
 ![mTLS to Customers and plain text to web-frontend](./img/7-kiali-two-svc.png)
 
-Notice there is a padlock icon between the ingress gateway and the customers service, which means the traffic is sent using mTLS. However, there's no padlock between the unknown (web frontend) and the customers service. Istio is sending plain text traffic to and from the services without the sidecar injected.
+
+Notice there is a padlock icon between the ingress gateway (`istio-ingressgateway`) and the customers service (`customers`), which means the traffic is sent using mTLS. 
+
+However, there's no padlock between the unknown (which we know if the web frontend service) and the customers service. Istio is sending plain text traffic to and from the services without the sidecar injected.
 
 Let's see what happens if we enable mTLS in STRICT mode. We expect the calls from the frontend to the customer service to start failing because there's no proxy injected to do the mTLS communication. On the other hand, the calls from the ingress gateway to the customer service will continue working.
 

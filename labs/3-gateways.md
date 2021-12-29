@@ -1,4 +1,4 @@
-# Creating a deployment and using a Gateway to expose it
+# Lab: Creating a deployment and using a Gateway to expose it
 
 In this lab, we will deploy a Hello World application to the cluster. We will then deploy a Gateway resource and a VirtualService that binds to the Gateway to expose the application on the external IP address.
 
@@ -25,14 +25,13 @@ Save the above YAML to `gateway.yaml` and deploy the Gateway using `kubectl appl
 
 If we try to access the ingress gateways' external IP address, we will get back an HTTP 404, because there aren't any VirtualServices bound to the Gateway.
 
-Let's look at the Envoy config and see the config that gets created:
+Let's look at the Envoy config and see the config that gets created. First, we need to get the ingress gateway Pod name (`kubectl get po -l app=istio-ingressgateway -A`):
 
 ```shell
-istioctl pc routes [ingress-gateway-pod]
+istioctl pc routes [ingress-gateway-pod].istio-system
 ```
 
 ```console
-
 NAME        DOMAINS     MATCH                  VIRTUAL SERVICE
 http.80     *           /*                     404
             *           /healthz/ready*
@@ -41,13 +40,6 @@ http.80     *           /*                     404
 
 Note that regardless what the hosts are set to in the gateway, because we don't have any virtual services attached it will show a 404.
 
-We can also use port-forward to look at the configuration of the proxy:
-
-```shell
-kubectl port-forward  pod/[ingress-gateway-pod] -n istio-system 15000:15000
-```
-
-If we scroll to the bottom you'll see the black hole virtual host without any routes defined.
 
 To get the ingress gateways external IP address, run the command below and look at the `EXTERNAL-IP` column value:
 
@@ -60,7 +52,7 @@ NAME                   TYPE           CLUSTER-IP   EXTERNAL-IP      PORT(S)     
 istio-ingressgateway   LoadBalancer   10.0.98.7    50.130.100.200   15021:31395/TCP,80:32542/TCP,443:31347/TCP,31400:32663/TCP,15443:31525/TCP   9h
 ```
 
-Throughout the rest of the course, we'll be using `GATEWAY_URL` in examples and text when we talk about the ingress gateway's external IP.
+Throughout the rest of the lab, we'll be using `GATEWAY_URL` in examples and text when we talk about the ingress gateway's external IP.
 
 You can set the `GATEWAY_URL` variable like this:
 
@@ -153,10 +145,10 @@ kubectl get vs
 
 ```console
 NAME          GATEWAYS    HOSTS   AGE
-hello-world   [gateway]   [*]     3m31s
+hello-world   [gateway]   ["hello.com"]     3m31s
 ```
 
-Let's check the Envoy routes again.
+Let's check the Envoy routes again:
 
 ```shell
 istioctl pc routes [ingress-gateway-pod]
@@ -169,13 +161,8 @@ http.80     hello.com     /*                     hello-world.default
             *             /stats/prometheus*
 ```
 
-This time you'll notice the domain is set to hello.com and a virtual service mapped to that domain shows up as well.
+This time you'll notice the domain is set to `hello.com` and a virtual service (`hello-world.default`) mapped to that domain shows up as well.
 
-If we look at the Envoy config, we'll see that the actual route is defined:
-
-```shell
-kubectl port-forward pod/[ingress-gateway-pod] -n istio-system 15000:15000
-```
 
 If we run cURL against `GATEWAY_URL` or open it in the browser, we will get back a response of `Hello World`:
 
