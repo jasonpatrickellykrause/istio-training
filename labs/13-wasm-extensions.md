@@ -8,32 +8,38 @@ We'll start with something trivial for our first example and write a simple Wasm
 
 Let's get started by downloading func-e CLI and installing it to `/usr/local/bin`:
 
-```sh
-curl https://func-e.io/install.sh | sudo bash -s -- -b /usr/local/bin
+```shell
+curl https://func-e.io/install.sh | bash -s -- -b /usr/local/bin
 ```
 
 Once downloaded, let's run it to make sure all is good:
 
-```sh
-$ func-e --version
+```shell
+func-e --version
+```
+
+```console
 func-e version 1.1.1
 ```
 
 ## Installing TinyGo
 
-TinyGo powers the SDK we'll be using as Wasm doesn't support the official Go compiler. 
+TinyGo powers the SDK we'll be using as Wasm doesn't support the official Go compiler.
 
 Let's download and install the TinyGo:
 
-```sh
+```shell
 wget https://github.com/tinygo-org/tinygo/releases/download/v0.21.0/tinygo_0.21.0_amd64.deb
 sudo dpkg -i tinygo_0.21.0_amd64.deb
 ```
 
 You can run `tinygo version` to check the installation is successful:
 
-```sh
-$ tinygo version
+```shell
+tinygo version
+```
+
+```console
 tinygo version 0.21.0 linux/amd64 (using go version go1.17.2 and LLVM version 11.0.0)
 ```
 
@@ -41,11 +47,11 @@ tinygo version 0.21.0 linux/amd64 (using go version go1.17.2 and LLVM version 11
 
 We'll start by creating a new folder for our extension, initializing the Go module, and downloading the SDK dependency:
 
-```sh
-$ mkdir header-filter && cd header-filter
-$ go mod init header-filter
-$ go mod edit -require=github.com/tetratelabs/proxy-wasm-go-sdk@main
-$ go mod download github.com/tetratelabs/proxy-wasm-go-sdk
+```shell
+mkdir header-filter && cd header-filter
+go mod init header-filter
+go mod edit -require=github.com/tetratelabs/proxy-wasm-go-sdk@main
+go mod download github.com/tetratelabs/proxy-wasm-go-sdk
 ```
 
 Next, let's create the `main.go` file where the code for our WASM extension will live:
@@ -110,7 +116,7 @@ Save the above contents to a file called `main.go`.
 
 Let's build the filter to check everything is good:
 
-```sh
+```shell
 tinygo build -o main.wasm -scheduler=none -target=wasi main.go
 ```
 
@@ -176,14 +182,17 @@ The Envoy configuration sets up a single listener on port 18000 that returns a d
 
 Let's run the Envoy with this configuration in the background:
 
-```sh
+```shell
 func-e run -c envoy.yaml &
 ```
 
 Envoy instance should start without any issues. Once it's started, we can send a request to the port Envoy is listening on (`18000`):
 
-```sh
-$ curl localhost:18000
+```shell
+curl localhost:18000
+```
+
+```console
 [2021-11-04 22:41:19.982][91521][info][wasm] [source/extensions/common/wasm/context.cc:1167] wasm log: OnHttpRequestHeaders
 [2021-11-04 22:41:19.982][91521][info][wasm] [source/extensions/common/wasm/context.cc:1167] wasm log: OnHttpResponseHeaders
 [2021-11-04 22:41:19.983][91521][info][wasm] [source/extensions/common/wasm/context.cc:1167] wasm log: 2 finished
@@ -198,7 +207,7 @@ You can stop the proxy by bringing the process to the foreground with `fg` and p
 
 Let's open the `main.go` file and add a header to the response headers. We'll be updating the OnHttpResponseHeaders function to do that.
 
-We'll call the `AddHttpResponseHeader` function to add a new header. Update the OnHttpResponseHeaders function to look like this: 
+We'll call the `AddHttpResponseHeader` function to add a new header. Update the OnHttpResponseHeaders function to look like this:
 
 ```go
 func (ctx *httpHeaders) OnHttpResponseHeaders(numHeaders int, endOfStream bool) types.Action {
@@ -213,20 +222,23 @@ func (ctx *httpHeaders) OnHttpResponseHeaders(numHeaders int, endOfStream bool) 
 
 Let's rebuild the extension:
 
-```sh
+```shell
 tinygo build -o main.wasm -scheduler=none -target=wasi main.go
 ```
 
 And we can now re-run the Envoy proxy with the updated extension (make sure to run `fg` first to bring the previous Envoy instance to the foreground and then use <kbd>CTRL+C</kbd> to stop it):
 
-```sh
+```shell
 func-e run -c envoy.yaml &
 ```
 
 Now, if we send a request again (make sure to add the `-v` flag), we'll see the header that got added to the response:
 
-```sh
-$ curl -v localhost:18000
+```shell
+curl -v localhost:18000
+```
+
+```console
 ...
 < HTTP/1.1 200 OK
 < content-length: 13
@@ -242,7 +254,7 @@ You can stop running Envoy by typing `fg` and then pressing <kbd>CTRL+C</kbd>.
 
 ## Reading values from configuration
 
-Hardcoding values like that in code is never a good idea. Let's see how we can read the additional headers.
+Hardcoded values like this in code are never a good idea. Let's see how we can read the additional headers.
 
 1. Add the `additionalHeaders` and `contextID` to the `pluginContext` struct:
 
@@ -256,7 +268,7 @@ Hardcoding values like that in code is never a good idea. Let's see how we can r
   }
   ```
 
-2. Update the `NewPluginContext` function to initialize the values:
+1. Update the `NewPluginContext` function to initialize the values:
 
   ```go
   func (*vmContext) NewPluginContext(contextID uint32) types.PluginContext {
@@ -264,7 +276,9 @@ Hardcoding values like that in code is never a good idea. Let's see how we can r
   }
   ```
   
-3. We can add the `OnPluginStart` function where we read in values from the Envoy configuration and store the key/value pairs in the `additionalHeaders` map:
+
+1. We can add the `OnPluginStart` function where we read in values from the Envoy configuration and store the key/value pairs in the `additionalHeaders` map:
+
 
   ```go
   func (ctx *pluginContext) OnPluginStart(pluginConfigurationSize int) types.OnPluginStartStatus {
@@ -311,7 +325,7 @@ func (ctx *pluginContext) NewHttpContext(contextID uint32) types.HttpContext {
 }
 ```
 
-Finally, in order to set the headers we modiy the `OnHttpResponseHeaders` function, iterate through the `additionalHeaders` map and call the `AddHttpResponseHeader` for each item:
+Finally, in order to set the headers we modify the `OnHttpResponseHeaders` function, iterate through the `additionalHeaders` map and call the `AddHttpResponseHeader` for each item:
 
 ```go
 func (ctx *httpHeaders) OnHttpResponseHeaders(numHeaders int, endOfStream bool) types.Action {
@@ -331,7 +345,7 @@ func (ctx *httpHeaders) OnHttpResponseHeaders(numHeaders int, endOfStream bool) 
 
 Let's rebuild the extension again:
 
-```sh
+```shell
 tinygo build -o main.wasm -scheduler=none -target=wasi main.go
 ```
 
@@ -359,8 +373,11 @@ Also, let's update the config file to include additional headers in the filter c
 
 With the filter updated, we can re-run the proxy again. When you send a request, you'll notice the headers we set in the filter configuration are added as response headers:
 
-```sh
-$ curl -v localhost:18000
+```shell
+curl -v localhost:18000
+```
+
+```console
 ...
 < HTTP/1.1 200 OK
 < content-length: 13
@@ -443,26 +460,29 @@ Here, we're checking if the "hello" request header is defined (note that we don'
 
 Let's rebuild the extension again:
 
-```sh
+```shell
 tinygo build -o main.wasm -scheduler=none -target=wasi main.go
 ```
 
 And then re-run the Envoy proxy. Make a couple of requests like this:
 
-```sh
+```shell
 curl -H "hello: something" localhost:18000
 ```
 
 You'll notice the log Envoy log entry like this one:
 
-```text
+```console
 wasm log: hello_header_counter incremented
 ```
 
 You can also use the admin address on port 8001 to check that the metric is being tracked:
 
-```sh
-$ curl localhost:8001/stats/prometheus | grep hello
+```shell
+curl localhost:8001/stats/prometheus | grep hello
+```
+
+```console
 # TYPE envoy_hello_header_counter counter
 envoy_hello_header_counter{} 1
 ```
@@ -500,13 +520,13 @@ gcloud auth configure-docker us-west1-docker.pkg.dev
 
 We can now use the full repository name to build the image called `wasm` (make sure to replace the `YOUR_PROJECT_NAME`, `REPOSITORY_NAME`, and the region if you used a different one):
 
-```sh
+```shell
 docker build -t us-west1-docker.pkg.dev/[YOUR_PROJECT_NAME]/[REPOSITORY_NAME]/wasm:v1 .
 ```
 
 Next, let's push the image to the registry, so the Istio agent can pull it when needed:
 
-```sh
+```shell
 docker push us-west1-docker.pkg.dev/[YOUR_PROJECT_NAME]/[REPOSITORY_NAME]/wasm:v1
 ```
 
@@ -514,7 +534,7 @@ Finally, we'll update the policy to allow public access to the repository - this
 
 The following command IaM policy binding for the repository and assigns all users the `roles/viewer` role: 
 
-```sh
+```shell
 gcloud artifacts repositories add-iam-policy-binding [REPOSITORY_NAME] --location=us-west1 --member=allUsers --role=roles/viewer
 ```  
 
@@ -581,24 +601,30 @@ spec:
         - containerPort: 80
 ```
 
-Save the above file to `httpbin.yaml` and deploy it using `kubectl apply -f httpbin.yaml`. 
+Save the above file to `httpbin.yaml` and deploy it using `kubectl apply -f httpbin.yaml`.
 
 Before continuing, check that the httpbin Pod is up and running:
 
-```sh
-$ kubectl get po
+```shell
+kubectl get po
+```
+
+```console
 NAME                       READY   STATUS        RESTARTS   AGE
 httpbin-66cdbdb6c5-4pv44   2/2     Running       1          11m
 ```
 
 To see if something went wrong with downloading the Wasm module, you can look at the istiod logs.
 
-Let's try out the deployed Wasm module! 
+Let's try out the deployed Wasm module!
 
 We will create a single Pod inside the cluster, and from there, we will send a request to `http://httpbin:8000/get` and include the `hello` header.
 
-```sh
-$ kubectl run curl --image=curlimages/curl -it --rm -- /bin/sh
+```shell
+kubectl run curl --image=curlimages/curl -it --rm -- /bin/sh
+```
+
+```console
 Defaulted container "curl" out of: curl, istio-proxy, istio-init (init)
 If you don't see a command prompt, try pressing enter.
 / $
@@ -606,8 +632,11 @@ If you don't see a command prompt, try pressing enter.
 
 Once you get the prompt to the curl container, send a request to the `httpbin` service:
 
-```sh
-/ $ curl -v -H "hello: value" http://httpbin:8000/headers
+```shell
+/ $ curl -v http://httpbin:8000/headers
+```
+
+```console
 > GET /headers HTTP/1.1
 > User-Agent: curl/7.35.0
 > Host: httpbin:8000
@@ -638,7 +667,7 @@ hello_header_counter{} 1
 
 To delete all resource created during this lab, run the following:
 
-```sh
+```shell
 kubectl delete wasmplugin wasm-example
 kubectl delete deployment httpbin
 kubectl delete svc httpbin

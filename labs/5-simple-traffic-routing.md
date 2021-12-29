@@ -120,8 +120,11 @@ Save the above to `customers-v1.yaml` and create the deployment and service usin
 
 We should have both applications deployed and running:
 
-```bash
-$ kubectl get po
+```shell
+kubectl get po
+```
+
+```console
 NAME                            READY   STATUS    RESTARTS   AGE
 customers-v1-7857944975-5lxc8   2/2     Running   0          36s
 web-frontend-659f65f49-jz58r    2/2     Running   0          3m38s
@@ -153,7 +156,7 @@ We can now open the `GATEWAY_URL` in the browser, and get to the Web Frontend th
 
 You can set the `GATEWAY_URL` variable like this:
 
-```sh
+```shelll
 export GATEWAY_URL=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 ```
 
@@ -237,9 +240,10 @@ spec:
           ports:
             - containerPort: 3000
 ```
+
 The deployment is nearly identical to the v1 deployment. The only differences are in the Docker image version that's being used and the v2 value set to the version label.
 
-Save the above YAML to `customers-v2.yaml` and create the deployment using `kubectl apply -f customers-v2.yaml`. 
+Save the above YAML to `customers-v2.yaml` and create the deployment using `kubectl apply -f customers-v2.yaml`.
 
 Because of the VirtualService we created earlier, all traffic will be going to the subset v1. Let's use the `weight` field and modify the VirtualService, so 50% of the traffic is being sent to the v1 subset and the other 50% to the v2 subset.
 
@@ -277,11 +281,11 @@ Open the `GATEWAY_URL` in the browser and refresh the page a couple of times to 
 
 To change the proportion of the traffic sent to one or the other version, we can update the VirtualService. Similarly, we could add v3 or v4 versions as well and split the traffic between those versions.
 
-## Cleanup 
+## Cleanup
 
 Delete the Deployments, Services, VirtualServices, DestinationRule and the Gateway:
 
-```bash
+```shell
 kubectl delete deploy web-frontend customers-{v1,v2}
 kubectl delete svc customers web-frontend
 kubectl delete vs customers web-frontend

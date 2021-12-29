@@ -6,12 +6,12 @@ metadata:
 spec:
   selector:
     matchLabels:
-        app: customers
-        version: v1
+      app: customers
+      version: v1
   action: ALLOW
   rules:
-  - from:
-    - source:
-        namespaces: ["default"]
-    - source:
-        principals: ["web-frontend"]
+    - from:
+        - source:
+            namespaces: ["default"]
+        - source:
+            principals: ["web-frontend"]

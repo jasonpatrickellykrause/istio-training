@@ -1,6 +1,6 @@
 # Advanced Traffic routing
 
-In this lab, we will learn how to use request properties to route the traffic between multiple service versions. 
+In this lab, we will learn how to use request properties to route the traffic between multiple service versions.
 
 We will start by deploying the Gateway:
 
@@ -189,7 +189,7 @@ To ensure everything is deployed and works correctly, open the `GATEWAY_URL` and
 
 You can set the `GATEWAY_URL` variable like this:
 
-```sh
+```shell
 export GATEWAY_URL=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 ```
 
@@ -226,14 +226,18 @@ spec:
 
 Save the above YAML to `customers-vs-split.yaml` and update the VirtualService with `kubectl apply -f customers-vs-split.yaml`.
 
->The destinations in the VirtualService would also work if we didn't provide the port number. That's because the service has a single port defined.
+> The destinations in the VirtualService would also work if we didn't provide the port number. That's because the service has a single port defined.
 
 If we open the `GATEWAY_URL` we should still get back the response from the Customers v1. If we add the header `user: debug` to the request we will notice that the customers' response is from the Customers v2.
 
 We can use the [ModHeader](https://chrome.google.com/webstore/detail/modheader/idgpnmonknjnojddfkpgkljpfnnfcklj?hl=en) extension to modify the headers from the browser. Alternatively, we can use cURL and add the header to the request like this:
 
-```bash
-$ curl -H "user: debug" http://$GATEWAY_URL/
+
+```shell
+curl -H "user: debug" http://GATEWAY_URL/
+```
+
+```console
 ...
 <th class="px-4 py-2">CITY</th>
 <th class="px-4 py-2">NAME</th>
@@ -242,11 +246,11 @@ $ curl -H "user: debug" http://$GATEWAY_URL/
 
 If we look through the response, you will notice the two columns - CITY and NAME.
 
-## Cleanup 
+## Cleanup
 
 Delete the Deployments, Services, VirtualServices, DestinationRule, and the Gateway:
 
-```bash
+```shell
 kubectl delete deploy web-frontend customers-{v1,v2}
 kubectl delete svc customers web-frontend
 kubectl delete vs customers web-frontend

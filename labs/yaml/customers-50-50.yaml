@@ -4,7 +4,7 @@ metadata:
   name: customers
 spec:
   hosts:
-    - 'customers.default.svc.cluster.local'
+    - "customers.default.svc.cluster.local"
   http:
     - route:
         - destination:

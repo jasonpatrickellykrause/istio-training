@@ -23,7 +23,7 @@ spec:
 
 Save the above YAML to `gateway.yaml` and deploy the Gateway using `kubectl apply -f gateway.yaml`
 
-Next, we will create the Web frontend deployment, service account, service, and a VirtualService. 
+Next, we will create the Web frontend deployment, service account, service, and a VirtualService.
 
 ```yaml
 apiVersion: v1
@@ -166,7 +166,7 @@ export GATEWAY_URL=$(kubectl get svc istio-ingressgateway -n istio-system -o jso
 
 If we open the `GATEWAY_URL` the web frontend page with the data from the customers v1 service should be displayed.
 
-Let's start by creating an authorization policy that denies all requests in the default namespace. 
+Let's start by creating an authorization policy that denies all requests in the default namespace.
 
 ```yaml
 apiVersion: security.istio.io/v1beta1
@@ -182,8 +182,7 @@ Save the above to `deny-all.yaml` and create the policy using `kubectl apply -f 
 
 If we try to access `GATEWAY_URL` we will get back the following response:
 
-```bash
-$ curl http://$GATEWAY_URL
+```console
 RBAC: access denied
 ```
 
@@ -191,7 +190,7 @@ Similarly, if we try to run a Pod inside the cluster and make a request from wit
 
 Let's try that:
 
-```
+```shell
 $ kubectl run curl --image=radial/busyboxplus:curl -i --tty --rm
 If you don't see a command prompt, try pressing enter.
 [ root@curl:/ ]$ curl customers
@@ -226,14 +225,14 @@ Save the above to `allow-ingress-frontend.yaml` and create the policy using `kub
 
 If we try to make a request from our host to the `GATEWAY_URL`, we will get a different error this time:
 
-```bash
+```shell
 $ curl http://$GATEWAY_URL
 "Request failed with status code 403"
 ```
 
 This error is coming from the customers service - remember we allowed calls to the web frontend. However, web-frontend still can't make calls to the customers service.
 
-If we go back to the `curl` Pod we are running inside the cluster and try to request `http://web-frontend` we will get an RBAC error. 
+If we go back to the `curl` Pod we are running inside the cluster and try to request `http://web-frontend` we will get an RBAC error.
 
 The DENY policy is in effect, and we are only allowing calls to be made from the ingress gateway.
 
@@ -257,12 +256,16 @@ spec:
         principals: ["cluster.local/ns/default/sa/web-frontend"]
 ```
 
-Save the above YAML to `allow-web-frontend-customers.yaml` and create the policy using `kubectl apply -f allow-web-frontend-customers.yaml`. 
+Save the above YAML to `allow-web-frontend-customers.yaml` and create the policy using `kubectl apply -f allow-web-frontend-customers.yaml`.
 
 As soon as the policy is created, we will see the web frontend working again - it will get the customer service responses. You can try that it works by opening the GATEWAY_URL in the browser or using cURL to send the request to the GATEWAY_URL.
 
-```sh
-$ curl http://$GATEWAY_URL
+```shell
+export GATEWAY_URL=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+curl http://$GATEWAY_URL
+```
+
+```console
 <!DOCTYPE html>
 <html>
   <head>
@@ -275,8 +278,11 @@ $ curl http://$GATEWAY_URL
 
 If we create a Pod inside the cluster again to try and directly access `web-frontend` and `customers` service, we'll notice that the calls will continue to fail, which is expected because we haven't explicitly allowed calls from the cURL Pod:
 
+```shell
+kubectl run curl --image=radial/busyboxplus:curl -i --tty --rm
 ```
-$ kubectl run curl --image=radial/busyboxplus:curl -i --tty --rm
+
+```console
 If you don't see a command prompt, try pressing enter.
 [ root@curl:/ ]$ curl customers
 RBAC: access denied
@@ -291,7 +297,7 @@ We have used multiple authorization policies to explicitly allow calls from the 
 
 Delete the Deployments, Services, VirtualServices, and the Gateway:
 
-```bash
+```shell
 kubectl delete deploy web-frontend customers-v1
 kubectl delete svc customers web-frontend
 kubectl delete vs customers web-frontend

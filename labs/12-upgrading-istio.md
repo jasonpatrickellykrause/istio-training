@@ -2,16 +2,19 @@
 
 In this lab, we will be upgrading Istio 1.10.3 to Istio 1.11.3. To go through the upgrade process, we will start with an empty Kubernetes cluster. You can use the following command to remove any Istio versions you might have installed on the cluster:
 
-```sh
-istioctl x uninstall --purge
+```shell
+getmesh istioctl x uninstall --purge
 ```
 
 ## Installing Istio 1.10.3
 
 We will use GetMesh to download, switch, and install Istio 1.10.3. First, we need to fetch version 1.10.3:
 
-```sh
-$ getmesh fetch --version 1.10.3
+```shell
+getmesh fetch --version 1.8.3
+```
+
+```console
 fallback to the tetrate flavor since --flavor flag is not given or not supported
 fallback to the flavor 0 version which is the latest one in 1.10.3-tetrate
 
@@ -29,25 +32,28 @@ istioctl switched to 1.10.3-tetrate-v0 now
 
 Once GetMesh downloads the specific Istio version, it will automatically switch to it. You can double-check that by running the version command:
 
-```sh
-$ getmesh istioctl version
+```shell
+getmesh istioctl version
+```
+
+```console
 no running Istio pods in "istio-system"
 1.10.3-tetrate-v0
-``` 
+```
 
 Let's install Istio 1.10.3 now:
 
-```sh
-$ getmesh istioctl install --set profile=demo --set revision=1-10-3
+```shell
+getmesh istioctl install --set profile=demo --set revision=1-10-3
 ```
 
 We'll deploy a sample application, but before we do that, let's label the `default` namespace with the revision label, so Istio can automatically inject the proxy:
 
-```sh
+```shell
 kubectl label ns default istio.io/rev=1-10-3
 ```
 
-We have labeled the `default` namespace with the `istio.io/rev` label because we used a revision label during the installation. 
+We have labeled the `default` namespace with the `istio.io/rev` label because we used a revision label during the installation.
 
 With Istio installed and namespace labeled, let's deploy a sample application - the web frontend and customer service.
 
@@ -55,13 +61,13 @@ Run `kubectl apply -f upgrade-demo.yaml` (the YAML file is in the `yaml/` folder
 
 Let's get the gateway's external IP address and store it in the GATEWAY_URL variable:
 
-```sh
+```shell
 export GATEWAY_URL=$(kubectl get service istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 ```
 
 We can now use the [ModHeader](https://chrome.google.com/webstore/detail/modheader/idgpnmonknjnojddfkpgkljpfnnfcklj?hl=en) extension to modify the headers from the browser and check that the applications are running. Alternatively, we can use cURL and add the header to the request like this:
 
-```sh
+```shell
 curl -H "Host: frontend.example.io" $GATEWAY_URL
 ```
 
@@ -73,20 +79,23 @@ We will now install Istio 1.11.3 with a similar command we used before. However,
 
 Let's switch the Istio CLI to the latest version using the following command:
 
-```sh
-$ getmesh fetch --version 1.11.3
+```shell
+getmesh fetch --version 1.11.3
 ```
 
 Next, we can install Istio 1.11.3 and set the revision flag to 1-11-3:
 
-```sh
-$ getmesh istioctl install --set profile=demo --set revision=1-11-3
+```shell
+getmesh istioctl install --set profile=demo --set revision=1-11-3
 ```
 
 This will create a new control plane (`istiod-1-11-3`), service (`istiod-1-11-3`) and a new sidecar injector. You can see the new control plane components by running the following command:
 
-```sh
-$ kubectl get po,svc,mutatingwebhookconfigurations -n istio-system
+```shell
+kubectl get po,svc,mutatingwebhookconfigurations -n istio-system
+```
+
+```console
 NAME                                        READY   STATUS    RESTARTS   AGE
 pod/istio-egressgateway-5ffc4d686b-ck97l    1/1     Running   0          38s
 pod/istio-ingressgateway-6dddffb46b-6mbcw   1/1     Running   0          38s
@@ -110,15 +119,21 @@ Notice the items in the above output have the `1-11-3` suffix - these are the it
 
 Let's check the proxy version of the frontend and customers pods - they should still use 1.10.3:
 
-```sh
-$ getmesh istioctl proxy-status | grep $(kubectl get pod -l app=web-frontend -o jsonpath='{.items..metadata.name}') | awk '{print $7}'
+```shell
+getmesh istioctl proxy-status | grep $(kubectl get pod -l app=web-frontend -o jsonpath='{.items..metadata.name}') | awk '{print $7}'
+```
+
+```console
 1.10.3-tetrate-v0
 ```
 
-The output should be `1.10.3-tetrate-v0`. On the other hand the gateways (ingress and egress) are automatically upgraded in-place to 1.11.3 version:
+The output should be `1.10.3-tetrate-v0`. On the other the gateways (ingress and egress) are automatically upgraded in-place to 1.11.3 version:
 
-```sh
-$ istioctl proxy-status | grep $(kubectl -n istio-system get pod -l app=istio-ingressgateway -o jsonpath='{.items..metadata.name}') | awk '{print $7}'
+```shell
+getmesh istioctl proxy-status | grep $(kubectl -n istio-system get pod -l app=istio-ingressgateway -o jsonpath='{.items..metadata.name}') | awk '{print $7}'
+```
+
+```console
 1.11.3-tetrate-v0
 ```
 
@@ -130,22 +145,25 @@ To upgrade the proxies, we need to configure them to point to the new istiod con
 
 Let's do that now and overwrite the existing label:
 
-```sh
+```shell
 kubectl label ns default istio.io/rev=1-11-3 --overwrite
 ```
 
-If we created another deployment in the default namespace, the proxies in the new pods would point to the new control plane. 
+If we created another deployment in the default namespace, the proxies in the new pods would point to the new control plane.
 
 If we want to update the existing deployments, we can restart the Pods to trigger the re-injection and have the new proxies be injected. We can use the rollout and restart command to restart all deployments:
 
-```sh
+```shell
 kubectl rollout restart deployment
 ```
 
 Once the Pods come back up, the proxies will be configured to talk to `istiod-1-11-3` control plane. We can run the proxy status command to check the proxy versions:
 
+```shell
+getmesh istioctl proxy-status | grep $(kubectl get pod -l app=web-frontend -o jsonpath='{.items..metadata.name}') | awk '{print $7}'
 ```
-$ getmesh istioctl proxy-status | grep $(kubectl get pod -l app=web-frontend -o jsonpath='{.items..metadata.name}') | awk '{print $7}'
+
+```console
 1.11.3-tetrate-v0
 ```
 
@@ -157,9 +175,14 @@ After upgrading both the control plane and the data plane, we can remove the old
 
 Let's switch the Istio CLI back to 1.10.3 and remove the old control plane:
 
-```sh
-$ getmesh switch --version 1.10.3
-istioctl switched to 1.8.2-tetrate-v0 now
+```shell
+getmesh switch --version 1.10.3
+```
 
-$ getmesh istioctl x uninstall --revision=1-10-3
+```console
+istioctl switched to 1.10.3-tetrate-v0 now
+```
+
+```shell
+getmesh istioctl x uninstall --revision=1-10-3
 ```

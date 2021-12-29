@@ -186,25 +186,25 @@ Save above YAML to `customers-delay.yaml` and update the VirtualService using `k
 
 To generate some traffic, let's open a separate terminal window and start making requests to the `GATEWAY_URL` in an endless loop:
 
-```bash
+```shell
 while true; do curl http://$GATEWAY_URL/; done
 ```
 
->You can set the `GATEWAY_URL` variable like this:
+> You can set the `GATEWAY_URL` variable like this:
 
-  ```sh
+  ```shell
   export GATEWAY_URL=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
   ```
 
 We should start noticing some of the requests taking longer than usual. Let's open Grafana and observe these delays.
 
-```bash
-$ istioctl dash grafana
+```shell
+getmesh istioctl dash grafana
 ```
 
 Open the URL in your browser, click **Home** and from the **istio** folder click the **Istio Service Dashboard**. On the dashboard, make sure to select the `web-frontend.default.svc.cluster.local` in the Service dropdown.
 
-Expand the **Service Workloads** section and you will notice the increased duration on the **Incoming Request Duration by Service Workload** graph, as shown in the figure below. 
+Expand the **Service Workloads** section and you will notice the increased duration on the **Incoming Request Duration by Service Workload** graph, as shown in the figure below.
 
 ![Incoming Request Duration by Source](./img/4-incoming-req-duration.png)
 
@@ -242,7 +242,7 @@ spec:
 
 Save the above YAML to `customers-fault.yaml` and update the VirtualService with `kubectl apply -f customers-fault.yaml`.
 
-Just like before, we will start noticing failures from the request loop. 
+Just like before, we will start noticing failures from the request loop.
 
 Go back to Grafana and open the **Istio Mesh Dashboard**. Note how the global success rate has dropped as well as the graph showing 5xx responses.
 
@@ -270,8 +270,8 @@ If we click on Graph and then the `web-frontend` service, we'll notice in the si
 
 Delete the Deployments, Services, VirtualServices, DestinationRule, and the Gateway:
 
-```bash
-kubectl delete deploy web-frontend customers-v1
+```shell
+kubectl delete deploy web-frontend customers-{v1,v2}
 kubectl delete svc customers web-frontend
 kubectl delete vs customers web-frontend
 kubectl delete dr customers

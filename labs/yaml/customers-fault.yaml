@@ -4,7 +4,7 @@ metadata:
   name: customers
 spec:
   hosts:
-    - 'customers.default.svc.cluster.local'
+    - "customers.default.svc.cluster.local"
   http:
     - route:
         - destination:
@@ -15,5 +15,5 @@ spec:
       fault:
         abort:
           httpStatus: 500
-          percentage: 
+          percentage:
             value: 50

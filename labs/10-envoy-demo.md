@@ -120,8 +120,11 @@ Save the above to `envoy-demo-apps.yaml` and deploy the apps using `kubectl appl
 
 Using the `istioctl proxy-config` command, we can list all listeners of the web frontend pod.
 
-```bash
-$ istioctl proxy-config listeners web-frontend-64455cd4c6-p6ft2
+```shell
+istioctl proxy-config listeners web-frontend-64455cd4c6-p6ft2
+```
+
+```console
 ADDRESS      PORT  MATCH   DESTINATION
 10.124.0.10  53    ALL     Cluster: outbound|53||kube-dns.kube-system.svc.cluster.local
 0.0.0.0      80    ALL     PassthroughCluster
@@ -147,8 +150,11 @@ ADDRESS      PORT  MATCH   DESTINATION
 
 The request from the web frontend to customers is an outbound HTTP request to port 80. This means that it gets handed off to the **0.0.0.0:80** virtual listener. We can use Istio CLI to filter the listeners by address and port. You can add the `-o json` to get a JSON representation of the listener:
 
-```bash
-$ istioctl proxy-config listeners web-frontend-58d497b6f8-lwqkg --address 0.0.0.0 --port 80 -o json
+```shell
+istioctl proxy-config listeners web-frontend-58d497b6f8-lwqkg --address 0.0.0.0 --port 80 -o json
+```
+
+```console
 ...
 "rds": {
    "configSource": {
@@ -166,8 +172,11 @@ A route selects a **cluster**. A cluster is a group of similar upstream hosts th
 
 Using the `routes` command, we can get the route details by filtering all routes by the name:
 
-```bash
-$ istioctl proxy-config routes  web-frontend-58d497b6f8-lwqkg --name 80 -o json
+```shell
+istioctl proxy-config routes  web-frontend-58d497b6f8-lwqkg --name 80 -o json
+```
+
+```console
 
 [
     {
@@ -218,29 +227,35 @@ $ istioctl proxy-config routes  web-frontend-58d497b6f8-lwqkg --name 80 -o json
 
 The route `80` configuration has a virtual host for each service. However, because our request is being sent to `customers.default.svc.cluster.local`, Envoy selects the virtual host (`customers.default.svc.cluster.local:80`) that matches one of the domains.
 
-Once the domain is matched, Envoy looks at the routes and picks the first one that matches the request. Since we don't have any special routing rules defined, it matches the first (and only) route that's defined and instructs Envoy to send the request to the cluster named `outbound|80|v1|customers.default.svc.cluster.local`. 
+Once the domain is matched, Envoy looks at the routes and picks the first one that matches the request. Since we don't have any special routing rules defined, it matches the first (and only) route that's defined and instructs Envoy to send the request to the cluster named `outbound|80|v1|customers.default.svc.cluster.local`.
 
->Note the `v1` in the cluster's name is because we have a DestinationRule deployed that creates the `v1` subset. If there are no subsets for a service, that part if left blank: `outbound|80||customers.default.svc.cluster.local`.
+> Note the `v1` in the cluster's name is because we have a DestinationRule deployed that creates the `v1` subset. If there are no subsets for a service, that part if left blank: `outbound|80||customers.default.svc.cluster.local`.
 
 Now that we have the cluster name, we can look up more details. To get an output that clearly shows the FQDN, port, subset and other information, you can omit the `-o json` flag:
 
-```bash
-$ istioctl proxy-config cluster web-frontend-58d497b6f8-lwqkg --fqdn customers.default.svc.cluster.local
+```shell
+istioctl proxy-config cluster web-frontend-58d497b6f8-lwqkg --fqdn customers.default.svc.cluster.local
+```
+
+```console
 SERVICE FQDN                            PORT     SUBSET     DIRECTION     TYPE     DESTINATION RULE
 customers.default.svc.cluster.local     80       -          outbound      EDS      customers.default
 ```
 
 Finally, using the cluster name, we can look up the actual endpoints the request will end up at:
 
-```bash
-$ istioctl proxy-config endpoints web-frontend-58d497b6f8-lwqkg --cluster "outbound|80||customers.default.svc.cluster.local"
+```shell
+istioctl proxy-config endpoints web-frontend-58d497b6f8-lwqkg --cluster "outbound|80||customers.default.svc.cluster.local"
+```
+
+```console
 ENDPOINT            STATUS      OUTLIER CHECK     CLUSTER
 10.120.0.4:3000     HEALTHY     OK                outbound|80|v1|customers.default.svc.cluster.local
 ```
 
 The endpoint address equals the pod IP where the Customer application is running. If we scale the customers deployment, additional endpoints show up in the output, like this:
 
-```bash
+```shell
 $ istioctl proxy-config endpoints web-frontend-58d497b6f8-lwqkg --cluster "outbound|80|v1|customers.default.svc.cluster.local"
 ENDPOINT            STATUS      OUTLIER CHECK     CLUSTER
 10.120.0.4:3000     HEALTHY     OK                outbound|80|v1|customers.default.svc.cluster.local
@@ -251,7 +266,7 @@ ENDPOINT            STATUS      OUTLIER CHECK     CLUSTER
 
 We can retrieve the same data through the Envoy dashboard. You can open the dashboard by running `istioctl dashboard envoy [POD_NAME]`.
 
-## ControlZ 
+## ControlZ
 
 The controlz command allows us to inspect and manipulate the internal state of an istiod instance. To open the dashboard, run `istioctl dashboard controlz [ISTIOD_POD_NAME].[NAMESPACE]`.
 
@@ -259,6 +274,6 @@ The controlz command allows us to inspect and manipulate the internal state of a
 
 Remove the deployed resources:
 
-```sh
+```shell
 kubectl delete -f envoy-demo-apps.yaml
 ```
