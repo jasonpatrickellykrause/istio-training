@@ -131,10 +131,6 @@ Once the Prometheus pod starts, we can use the `dashboard` command to open the P
 getmesh istioctl dashboard prometheus
 ```
 
-```console
-http://localhost:9090
-```
-
 We can now open <http://localhost:9090> in a browser to get to the Prometheus dashboard, as shown in the figure below. If running in Google Cloud Shell, click the Web Preview icon in the top right corner to open your browser on a specific port.
 
 ![Prometheus Dashboard](./img/2-prometheus-ui.png)
@@ -186,10 +182,6 @@ Kubernetes deploys Grafana in the `istio-system` namespace. Once Grafana pod is 
 
 ```shell
 getmesh istioctl dashboard grafana
-```
-
-```console
-http://localhost:3000
 ```
 
 >The default port number Grafana dashboard gets exposed on is `3000`. However, since we're running in Google Cloud Shell the 3000 port number is taken, so dashboard command will randomly select a port for you. Make sure you replace the port number 3000 with the number you see on your screen.
