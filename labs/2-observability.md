@@ -135,10 +135,10 @@ We can now open <http://localhost:9090> in a browser to get to the Prometheus da
 
 ![Prometheus Dashboard](./img/2-prometheus-ui.png)
 
-Open another terminal tab (click the **+** button) and let's make 100 requests to the $NGINX_IP environment variable we've created at the beginning.
+Let's make 100 requests to the $NGINX_IP environment variable we've created at the beginning.
 
-```sh
-$ for ((i=1;i<=100;i++)); do curl -s $NGINX_IP > /dev/null; done
+```shell
+for ((i=1;i<=100;i++)); do curl -s $NGINX_IP > /dev/null; done
 ```
 
 Then, from the Prometheus UI you can search for one of the Istio metrics (`istio_requests_total` for example) to get the idea on what data is being collected for requests.
