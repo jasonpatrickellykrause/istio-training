@@ -60,12 +60,13 @@ When the deployment is created we can edit it and configure the `istio-proxy` co
 
 Let's open the deployment YAML in the editor using the `kubectl edit deployment httpbin` command. This will open the vim editor with the deployment YAML.
 
-Find the containers section, specifically the `istio-proxy` container and change the following two values in the `securityContext` to `true`:
+Find the containers section, specifically the `istio-proxy` container and change the following three values in the `securityContext` field:
 
 ```yaml
 securityContext:
   allowPrivilegeEscalation: true
   privileged: true
+  readOnlyRootFilesystem: false
 ```
 
 Save the changes and exit the editor.
