@@ -124,6 +124,8 @@ user@cloudshell:~$
 
 ## Install GetMesh CLI
 
+**NOTE**: You can skip the GetMesh CLI installation if using Istio 1.12.1.
+
 The first step is to download GetMesh CLI. You can install GetMesh on macOS and Linux platforms. We can use the following command to download the latest version of GetMesh and certified Istio:
 
 ```shell
@@ -155,30 +157,27 @@ The recommended profile for production deployments is the `default` profile. We 
 
 We can also start with the `minimal` component and individually install other features, like ingress and egress gateway, later.
 
-<!-- To install the demo profile of Istio on a currently active Kubernetes cluster, we have to download Istio first:
+If using Istio 1.12.1 (and not GetMesh CLI), download the Istio package first:
 
-```sh
+
+```shell
 curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.12.1 sh - 
 ```
 
 Next, let's copy the Istio CLI to the `/usr/local/bin` folder:
 
-```sh
+```shell
 sudo cp istio-1.12.1/bin/istioctl /usr/local/bin
 ```
 
 >Google Cloud Shell comes preinstalled with an older Istio CLI version.
 
-We can now install the demo profile of Istio:
-
-```sh
-istioctl install --set profile=demo -y
-``` -->
+> **NOTE**: If you didn't use GetMesh CLI to install Istio, you can run any Istio CLI command by removing the `getmesh` from all commands. E.g. instead for running `getmesh istioctl install` you can run `istioctl install`.
 
 To install the demo profile of Istio on a currently active Kubernetes cluster, we can use `getmesh istioctl` command like this:
 
 ```shell
-getmesh istioctl install --set profile=demo
+getmesh istioctl install --set profile=demo -y
 ```
 
 GetMesh will check the cluster to make sure it is ready for Istio installation. Make sure you confirm the installation by when prompted by typing "y" and GetMesh will proceed with installation.
