@@ -175,7 +175,7 @@ curl -v -H "Host: hello.com" http://$GATEWAY_URL/
 * TCP_NODELAY set
 * Connected to GATEWAY_URL (GATEWAY_URL) port 80 (#0)
 > GET / HTTP/1.1
-> Host: GATEWAY_URL
+> Host: hello.com
 > User-Agent: curl/7.64.1
 > Accept: */*
 >
