@@ -32,10 +32,10 @@ istioctl pc routes [ingress-gateway-pod].istio-system
 ```
 
 ```console
-NAME        DOMAINS     MATCH                  VIRTUAL SERVICE
-http.80     *           /*                     404
-            *           /healthz/ready*
-            *           /stats/prometheus*
+NAME          DOMAINS     MATCH                  VIRTUAL SERVICE
+http.8080     *           /*                     404
+              *           /healthz/ready*
+              *           /stats/prometheus*
 ```
 
 Note that regardless what the hosts are set to in the gateway, because we don't have any virtual services attached it will show a 404.
