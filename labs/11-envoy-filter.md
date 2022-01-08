@@ -19,7 +19,7 @@ spec:
     match:
       context: SIDECAR_INBOUND
       proxy:
-        proxyVersion: '1\.11.*'
+        proxyVersion: '1\.12.*'
       listener:
         portNumber: 8080
         filterChain:
