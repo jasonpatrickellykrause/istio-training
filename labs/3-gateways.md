@@ -155,10 +155,10 @@ istioctl pc routes [ingress-gateway-pod]
 ```
 
 ```console
-NAME        DOMAINS       MATCH                  VIRTUAL SERVICE
-http.80     hello.com     /*                     hello-world.default
-            *             /healthz/ready*
-            *             /stats/prometheus*
+NAME          DOMAINS       MATCH                  VIRTUAL SERVICE
+http.8080     hello.com     /*                     hello-world.default
+              *             /healthz/ready*
+              *             /stats/prometheus*
 ```
 
 This time you'll notice the domain is set to `hello.com` and a virtual service (`hello-world.default`) mapped to that domain shows up as well.
