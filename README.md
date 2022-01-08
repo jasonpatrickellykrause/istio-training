@@ -4,7 +4,10 @@ Labs:
 
 1. [Installing Istio](./labs/1-installing-istio.md)
 1. [Observability](./labs/2-observability.md)
+  1. [Customizing metrics](./labs/2-1_observability-customizing-metrics.md)
 1. [Gateways](./labs/3-gateways.md)
+  1. [Gateways - SSL](./labs/3-1_gateways_ssl.md)
+  1. [Gateways - Egress](./labs/3-2_egress_gateway.md)
 1. [Observing failure injection](./labs/4-observing-failure-injection.md)
 1. [Simple traffic routing](./labs/5-simple-traffic-routing.md)
 1. [Advanced traffic routing](./labs/6-advanced-traffic-routing.md)
