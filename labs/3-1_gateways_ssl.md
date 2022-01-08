@@ -97,10 +97,10 @@ Save the above YAML to vs.yaml and deploy it using kubectl apply -f vs.yaml.
 Finally, let's get the external IP address of the ingress gateway:
 
 ```sh
-export INGRESS_IP=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+export GATEWAY_URL=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 ```
 
-If you run curl $INGRESS_IP you should get back a "Hello World" response.
+If you run curl $GATEWAY_URL you should get back a "Hello World" response.
 
 ## Using self-signed certificate
 
@@ -192,10 +192,10 @@ spec:
 
 Save the above YAML to `vs.yaml` and deploy it using `kubectl apply -f vs.yaml`.
 
-To try this out we'll use cURL and set the host header to `hello.tetratelabs.dev`. Then, we'll tell curl to resolve the `hello.tetratelabs.dev` to the `$INGRESS_IP` address. Additionaly, we are also presenting the certificate authority cert we created:
+To try this out we'll use cURL and set the host header to `hello.tetratelabs.dev`. Then, we'll tell curl to resolve the `hello.tetratelabs.dev` to the `$GATEWAY_URL` address. Additionaly, we are also presenting the certificate authority cert we created:
 
 ```sh
-curl -v -H "Host:hello.tetratelabs.dev" --resolve "hello.tetratelabs.dev:443:$INGRESS_IP" --cacert tetratelabs.dev.crt "https://hello.tetratelabs.dev:443"
+curl -v -H "Host:hello.tetratelabs.dev" --resolve "hello.tetratelabs.dev:443:$GATEWAY_URL" --cacert tetratelabs.dev.crt "https://hello.tetratelabs.dev:443"
 ```
 
 You'll notice the verbose output shows that the certificate was used:
